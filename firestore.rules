@@ -1,0 +1,49 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isOwner(userId) {
+      return request.auth != null && request.auth.uid == userId;
+    }
+
+    function isValidBudgetFields() {
+      return request.resource.data.income is list
+        && request.resource.data.expenses is list
+        && request.resource.data.goals is list
+        && request.resource.data.meta is map
+        && request.resource.data.updatedAt is timestamp
+        && (!('activityLog' in request.resource.data.keys())
+            || request.resource.data.activityLog is list);
+    }
+
+    match /users/{userId}/budget/{docId} {
+      allow read: if isOwner(userId) && docId == 'current';
+      allow create, update: if isOwner(userId)
+        && docId == 'current'
+        && isValidBudgetFields();
+      allow delete: if isOwner(userId) && docId == 'current';
+    }
+
+    match /users/{userId}/settings/{docId} {
+      allow read: if isOwner(userId) && docId == 'preferences';
+      allow create, update: if isOwner(userId)
+        && docId == 'preferences'
+        && request.resource.data.keys().hasOnly(['palette', 'updatedAt'])
+        && request.resource.data.palette is string
+        && request.resource.data.palette.size() <= 32
+        && request.resource.data.updatedAt is timestamp;
+    }
+
+    match /users/{userId}/budgetHistory/{docId} {
+      allow read: if isOwner(userId);
+      allow create: if isOwner(userId)
+        && request.resource.data.income is list
+        && request.resource.data.expenses is list
+        && request.resource.data.goals is list
+        && request.resource.data.meta is map
+        && request.resource.data.savedAtMs is number
+        && request.resource.data.reason is string;
+      allow update: if false;
+      allow delete: if isOwner(userId);
+    }
+  }
+}

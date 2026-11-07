@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000" role="img" aria-label="Flow">
+  <defs>
+    <linearGradient id="ring" gradientUnits="userSpaceOnUse" x1="170" y1="120" x2="830" y2="880">
+      <stop offset="0" stop-color="#f7f7fa"/>
+      <stop offset=".2" stop-color="#b9bbc6"/>
+      <stop offset=".34" stop-color="#ffffff"/>
+      <stop offset=".44" stop-color="#ff9d5c"/>
+      <stop offset=".48" stop-color="#5a6cf0"/>
+      <stop offset=".54" stop-color="#3a3d4d"/>
+      <stop offset=".72" stop-color="#d9dbe3"/>
+      <stop offset=".86" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#7f8292"/>
+    </linearGradient>
+    <linearGradient id="wave" gradientUnits="userSpaceOnUse" x1="260" y1="420" x2="720" y2="780">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset=".45" stop-color="#b4b6c2"/>
+      <stop offset=".8" stop-color="#585b6b"/>
+      <stop offset="1" stop-color="#e4e5ec"/>
+    </linearGradient>
+    <clipPath id="inner"><circle cx="500" cy="500" r="285"/></clipPath>
+  </defs>
+  <rect width="1000" height="1000" rx="224" fill="#161616"/>
+  <g transform="translate(75 75) scale(.85)">
+    <circle cx="500" cy="500" r="375" fill="none" stroke="url(#ring)" stroke-width="80"/>
+    <path clip-path="url(#inner)" fill="url(#wave)" d="M150 540C280 400 400 400 500 510C600 620 720 620 850 480V900H150Z"/>
+  </g>
+</svg>
