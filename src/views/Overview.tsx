@@ -879,7 +879,7 @@ function EmptyState({
   onAction?: () => void
 }) {
   return (
-    <div className="flex flex-1 flex-col items-center justify-center rounded-xl border border-dashed border-rule px-4 py-6 text-center">
+    <div className="flex flex-1 flex-col items-center justify-center px-4 py-6 text-center">
       <p className="text-sm text-zinc-400">{message}</p>
       {action && onAction && (
         <button

@@ -9,7 +9,7 @@
  * The values below are light paper; :root[data-theme='dark'] swaps them.
  */
 @theme {
-  --color-ink: #f3f0e8;
+  --color-ink: #f6f6f4;
   --color-ledger: #ffffff;
   --color-ledger-2: #fbf9f4;
   --color-ledger-3: #ece8de;
@@ -1010,4 +1010,11 @@ body {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border-width: 0;
+}
+
+/* Placeholders: the faint text token, nudged toward the background so they still read as hints.
+   90% keeps every palette, light and dark, at or above 5:1 (WCAG AA needs 4.5:1). */
+::placeholder {
+  color: color-mix(in srgb, var(--color-paper-3) 90%, var(--color-ink));
+  opacity: 1;
 }
