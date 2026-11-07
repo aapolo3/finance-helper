@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap"
+    />
+    <title>Flow</title>
+    <script>
+      // Pick light or dark before first paint; src/lib/appearance.ts owns the setting.
+      try {
+        var flowAppearance = localStorage.getItem('flow:appearance')
+        var flowDark =
+          flowAppearance === 'dark' ||
+          (flowAppearance !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)
+        document.documentElement.dataset.theme = flowDark ? 'dark' : 'light'
+        // src/lib/palette.ts owns this one; an unknown id falls back to the default tokens.
+        document.documentElement.dataset.palette = localStorage.getItem('flow:palette') || 'paper'
+      } catch (e) {
+        document.documentElement.dataset.theme = 'light'
+      }
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

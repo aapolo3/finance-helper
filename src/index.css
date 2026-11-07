@@ -1,0 +1,1013 @@
+@import "tailwindcss";
+
+/*
+ * Paper ledger, in two lights. Light paper: warm paper ground, white cards, near-black
+ * ink. Dark: the same paper at night, warm charcoal surfaces stepped lighter per layer.
+ * Token names are roles, not colors: ink is the page ground, ledger 1–4 are surfaces
+ * from card to selected control, paper 1–3 is text from primary to muted. Color only
+ * speaks for money: cash (in / safe), copper (goals), due (soon), over (overspent).
+ * The values below are light paper; :root[data-theme='dark'] swaps them.
+ */
+@theme {
+  --color-ink: #f3f0e8;
+  --color-ledger: #ffffff;
+  --color-ledger-2: #fbf9f4;
+  --color-ledger-3: #ece8de;
+  --color-ledger-4: #e3ded1;
+  --color-rule: rgb(27 29 27 / 0.08);
+  --color-rule-strong: rgb(27 29 27 / 0.16);
+  --color-paper: #1b1d1b;
+  --color-paper-2: #434843;
+  --color-paper-3: #525752;
+  --color-cash: #1f6b46;
+  --color-copper: #8f4d22;
+  --color-due: #705800;
+  --color-over: #a5303b;
+
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Newsreader", Georgia, serif;
+}
+
+/* Compact card layouts: a grid card narrower than 380px, or any card under 20rem wide. */
+@custom-variant compact {
+  &:where([data-compact] *) {
+    @slot;
+  }
+  @container (width < 20rem) {
+    @slot;
+  }
+}
+
+/* The resolved Appearance setting: for the few spots where light and dark differ beyond tokens. */
+@custom-variant night {
+  &:where([data-theme='dark'], [data-theme='dark'] *) {
+    @slot;
+  }
+}
+
+/* Keep system dark mode, and also honor a .dark ancestor so the dashboard can force it. */
+@custom-variant dark {
+  &:where(.dark, .dark *) {
+    @slot;
+  }
+  @media (prefers-color-scheme: dark) {
+    @slot;
+  }
+}
+
+/*
+ * Shade steps between the role tokens, per theme. Views still written with zinc and
+ * hue utilities read these (below), so one swap here restyles every screen.
+ */
+:root {
+  color-scheme: light;
+  font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --shade-text-strong: #272a27;
+  --shade-text-soft: #333733;
+  --shade-text-faint: #5b605b;
+  --shade-over-tint: #f6e3e4;
+  --shade-over-text: #85252e;
+  --shade-over-mid: #a5303b;
+  --shade-over-fill: #a5303b;
+  --shade-cash-tint: #e1eee6;
+  --shade-cash-text: #1a5238;
+  --shade-cash-mid: #1f6b46;
+  --shade-copper-tint: #f1e2d3;
+  --shade-copper-text: #713c19;
+  --shade-due-text: #5c4800;
+}
+
+/* Warm charcoal: the paper look at night. */
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --color-ink: #161513;
+  --color-ledger: #1e1c19;
+  --color-ledger-2: #24221e;
+  --color-ledger-3: #2a2824;
+  --color-ledger-4: #34312c;
+  --color-rule: rgb(236 232 222 / 0.07);
+  --color-rule-strong: rgb(236 232 222 / 0.14);
+  --color-paper: #ece8de;
+  --color-paper-2: #bdb8ad;
+  --color-paper-3: #aca79b;
+  --color-cash: #76c79a;
+  --color-copper: #dd9b67;
+  --color-due: #e3c45a;
+  --color-over: #ec8a91;
+  --shade-text-strong: #dedacf;
+  --shade-text-soft: #d0cbc1;
+  --shade-text-faint: #a09b90;
+  --shade-over-tint: #2e1a1b;
+  --shade-over-text: #f0b9bc;
+  --shade-over-mid: #ec8a91;
+  --shade-over-fill: #a83a45;
+  --shade-cash-tint: #15241b;
+  --shade-cash-text: #b4dfc6;
+  --shade-cash-mid: #76c79a;
+  --shade-copper-tint: #33241a;
+  --shade-copper-text: #e8b48c;
+  --shade-due-text: #ecd88a;
+}
+
+/* Palettes, chosen in Settings. Paper, the values above, is the default. Keep ids in step with src/lib/palette.ts. */
+:root[data-palette='harbor'] {
+  --color-ink: #e8edf4;
+  --color-ledger: #ffffff;
+  --color-ledger-2: #f5f7fb;
+  --color-ledger-3: #dfe6f0;
+  --color-ledger-4: #d3dce9;
+  --color-rule: rgb(16 26 43 / 0.08);
+  --color-rule-strong: rgb(16 26 43 / 0.16);
+  --color-paper: #101a2b;
+  --color-paper-2: #33415a;
+  --color-paper-3: #44526b;
+  --color-cash: #0f6a4a;
+  --color-copper: #8a4a1f;
+  --color-due: #6a5400;
+  --color-over: #a82a45;
+  --shade-text-strong: #1a2639;
+  --shade-text-soft: #253147;
+  --shade-text-faint: #4f5d76;
+  --shade-over-tint: #f8e3e8;
+  --shade-over-text: #80203a;
+  --shade-over-mid: #a82a45;
+  --shade-over-fill: #a82a45;
+  --shade-cash-tint: #dcefe6;
+  --shade-cash-text: #0b4f38;
+  --shade-cash-mid: #0f6a4a;
+  --shade-copper-tint: #f3e4d6;
+  --shade-copper-text: #6d3a18;
+  --shade-due-text: #554400;
+}
+:root[data-palette='harbor'][data-theme='dark'] {
+  --color-ink: #0d1522;
+  --color-ledger: #141e2e;
+  --color-ledger-2: #1a2637;
+  --color-ledger-3: #213044;
+  --color-ledger-4: #2a3b52;
+  --color-rule: rgb(230 237 247 / 0.07);
+  --color-rule-strong: rgb(230 237 247 / 0.14);
+  --color-paper: #e6edf7;
+  --color-paper-2: #b7c5d9;
+  --color-paper-3: #a3b3c9;
+  --color-cash: #62cfa5;
+  --color-copper: #e3a274;
+  --color-due: #e8cc62;
+  --color-over: #f28da0;
+  --shade-text-strong: #d8e1ee;
+  --shade-text-soft: #cad5e5;
+  --shade-text-faint: #96a7be;
+  --shade-over-tint: #321820;
+  --shade-over-text: #f4bdc1;
+  --shade-over-mid: #f28da0;
+  --shade-over-fill: #a8344a;
+  --shade-cash-tint: #10291f;
+  --shade-cash-text: #b2e5cb;
+  --shade-cash-mid: #62cfa5;
+  --shade-copper-tint: #33241a;
+  --shade-copper-text: #ebb994;
+  --shade-due-text: #efdc8e;
+}
+
+:root[data-palette='plum'] {
+  --color-ink: #f3eef6;
+  --color-ledger: #ffffff;
+  --color-ledger-2: #faf7fb;
+  --color-ledger-3: #e9e1ee;
+  --color-ledger-4: #dfd4e6;
+  --color-rule: rgb(30 20 36 / 0.08);
+  --color-rule-strong: rgb(30 20 36 / 0.16);
+  --color-paper: #1e1424;
+  --color-paper-2: #473a50;
+  --color-paper-3: #57495f;
+  --color-cash: #0f6a4a;
+  --color-copper: #8a4a1f;
+  --color-due: #6a5400;
+  --color-over: #a82a45;
+  --shade-text-strong: #2a1f31;
+  --shade-text-soft: #372b3e;
+  --shade-text-faint: #62536b;
+  --shade-over-tint: #f8e3e8;
+  --shade-over-text: #80203a;
+  --shade-over-mid: #a82a45;
+  --shade-over-fill: #a82a45;
+  --shade-cash-tint: #dcefe6;
+  --shade-cash-text: #0b4f38;
+  --shade-cash-mid: #0f6a4a;
+  --shade-copper-tint: #f3e4d6;
+  --shade-copper-text: #6d3a18;
+  --shade-due-text: #554400;
+}
+:root[data-palette='plum'][data-theme='dark'] {
+  --color-ink: #1a1220;
+  --color-ledger: #231a2b;
+  --color-ledger-2: #2a2033;
+  --color-ledger-3: #32273c;
+  --color-ledger-4: #3d3148;
+  --color-rule: rgb(240 233 245 / 0.07);
+  --color-rule-strong: rgb(240 233 245 / 0.14);
+  --color-paper: #f0e9f5;
+  --color-paper-2: #c9bdd3;
+  --color-paper-3: #b6a8c2;
+  --color-cash: #62cfa5;
+  --color-copper: #e3a274;
+  --color-due: #e8cc62;
+  --color-over: #f28da0;
+  --shade-text-strong: #e4dceb;
+  --shade-text-soft: #d9cfe1;
+  --shade-text-faint: #ab9cb7;
+  --shade-over-tint: #321820;
+  --shade-over-text: #f4bdc1;
+  --shade-over-mid: #f28da0;
+  --shade-over-fill: #a8344a;
+  --shade-cash-tint: #10291f;
+  --shade-cash-text: #b2e5cb;
+  --shade-cash-mid: #62cfa5;
+  --shade-copper-tint: #33241a;
+  --shade-copper-text: #ebb994;
+  --shade-due-text: #efdc8e;
+}
+
+:root[data-palette='moss'] {
+  --color-ink: #e5eee0;
+  --color-ledger: #fbfdf9;
+  --color-ledger-2: #f3f7ef;
+  --color-ledger-3: #d9e5d2;
+  --color-ledger-4: #ccdcc4;
+  --color-rule: rgb(15 31 20 / 0.08);
+  --color-rule-strong: rgb(15 31 20 / 0.16);
+  --color-paper: #0f1f14;
+  --color-paper-2: #2f4435;
+  --color-paper-3: #3e5444;
+  --color-cash: #0f6748;
+  --color-copper: #8a4a1f;
+  --color-due: #6a5400;
+  --color-over: #a82a45;
+  --shade-text-strong: #192a1e;
+  --shade-text-soft: #223528;
+  --shade-text-faint: #48604f;
+  --shade-over-tint: #f8e3e8;
+  --shade-over-text: #80203a;
+  --shade-over-mid: #a82a45;
+  --shade-over-fill: #a82a45;
+  --shade-cash-tint: #dcefe6;
+  --shade-cash-text: #0b4f38;
+  --shade-cash-mid: #0f6748;
+  --shade-copper-tint: #f3e4d6;
+  --shade-copper-text: #6d3a18;
+  --shade-due-text: #554400;
+}
+:root[data-palette='moss'][data-theme='dark'] {
+  --color-ink: #0c1a12;
+  --color-ledger: #13251a;
+  --color-ledger-2: #192d21;
+  --color-ledger-3: #203728;
+  --color-ledger-4: #294332;
+  --color-rule: rgb(231 242 234 / 0.07);
+  --color-rule-strong: rgb(231 242 234 / 0.14);
+  --color-paper: #e7f2ea;
+  --color-paper-2: #b7cdbd;
+  --color-paper-3: #a0b9a8;
+  --color-cash: #62cfa5;
+  --color-copper: #e3a274;
+  --color-due: #e8cc62;
+  --color-over: #f28da0;
+  --shade-text-strong: #d9e7dc;
+  --shade-text-soft: #cadccf;
+  --shade-text-faint: #97b09f;
+  --shade-over-tint: #321820;
+  --shade-over-text: #f4bdc1;
+  --shade-over-mid: #f28da0;
+  --shade-over-fill: #a8344a;
+  --shade-cash-tint: #10291f;
+  --shade-cash-text: #b2e5cb;
+  --shade-cash-mid: #62cfa5;
+  --shade-copper-tint: #33241a;
+  --shade-copper-text: #ebb994;
+  --shade-due-text: #efdc8e;
+}
+
+:root[data-palette='mono'] {
+  --color-ink: #fafafa;
+  --color-ledger: #ffffff;
+  --color-ledger-2: #f5f5f5;
+  --color-ledger-3: #ececec;
+  --color-ledger-4: #e0e0e0;
+  --color-rule: rgb(10 10 10 / 0.08);
+  --color-rule-strong: rgb(10 10 10 / 0.16);
+  --color-paper: #0a0a0a;
+  --color-paper-2: #3a3a3a;
+  --color-paper-3: #4f4f4f;
+  --color-cash: #0f6a4a;
+  --color-copper: #8a4a1f;
+  --color-due: #6a5400;
+  --color-over: #a82a45;
+  --shade-text-strong: #181818;
+  --shade-text-soft: #272727;
+  --shade-text-faint: #5c5c5c;
+  --shade-over-tint: #f8e3e8;
+  --shade-over-text: #80203a;
+  --shade-over-mid: #a82a45;
+  --shade-over-fill: #a82a45;
+  --shade-cash-tint: #dcefe6;
+  --shade-cash-text: #0b4f38;
+  --shade-cash-mid: #0f6a4a;
+  --shade-copper-tint: #f3e4d6;
+  --shade-copper-text: #6d3a18;
+  --shade-due-text: #554400;
+}
+:root[data-palette='mono'][data-theme='dark'] {
+  --color-ink: #000000;
+  --color-ledger: #111111;
+  --color-ledger-2: #181818;
+  --color-ledger-3: #222222;
+  --color-ledger-4: #2c2c2c;
+  --color-rule: rgb(250 250 250 / 0.07);
+  --color-rule-strong: rgb(250 250 250 / 0.14);
+  --color-paper: #fafafa;
+  --color-paper-2: #c8c8c8;
+  --color-paper-3: #b0b0b0;
+  --color-cash: #62cfa5;
+  --color-copper: #e3a274;
+  --color-due: #e8cc62;
+  --color-over: #f28da0;
+  --shade-text-strong: #ebebeb;
+  --shade-text-soft: #dcdcdc;
+  --shade-text-faint: #a0a0a0;
+  --shade-over-tint: #321820;
+  --shade-over-text: #f4bdc1;
+  --shade-over-mid: #f28da0;
+  --shade-over-fill: #a8344a;
+  --shade-cash-tint: #10291f;
+  --shade-cash-text: #b2e5cb;
+  --shade-cash-mid: #62cfa5;
+  --shade-copper-tint: #33241a;
+  --shade-copper-text: #ebb994;
+  --shade-due-text: #efdc8e;
+}
+
+:root[data-palette='blue-mono'] {
+  --color-ink: #f8f9fb;
+  --color-ledger: #ffffff;
+  --color-ledger-2: #f3f5f8;
+  --color-ledger-3: #e9ecf1;
+  --color-ledger-4: #dde1e8;
+  --color-rule: rgb(10 12 16 / 0.08);
+  --color-rule-strong: rgb(10 12 16 / 0.16);
+  --color-paper: #0a0c10;
+  --color-paper-2: #383c44;
+  --color-paper-3: #4c5159;
+  --color-cash: #0f6a4a;
+  --color-copper: #8a4a1f;
+  --color-due: #6a5400;
+  --color-over: #a82a45;
+  --shade-text-strong: #181a20;
+  --shade-text-soft: #26292f;
+  --shade-text-faint: #595e67;
+  --shade-over-tint: #f8e3e8;
+  --shade-over-text: #80203a;
+  --shade-over-mid: #a82a45;
+  --shade-over-fill: #a82a45;
+  --shade-cash-tint: #dcefe6;
+  --shade-cash-text: #0b4f38;
+  --shade-cash-mid: #0f6a4a;
+  --shade-copper-tint: #f3e4d6;
+  --shade-copper-text: #6d3a18;
+  --shade-due-text: #554400;
+}
+:root[data-palette='blue-mono'][data-theme='dark'] {
+  --color-ink: #05070b;
+  --color-ledger: #0f1217;
+  --color-ledger-2: #161a20;
+  --color-ledger-3: #20242b;
+  --color-ledger-4: #2a2f37;
+  --color-rule: rgb(249 250 252 / 0.07);
+  --color-rule-strong: rgb(249 250 252 / 0.14);
+  --color-paper: #f9fafc;
+  --color-paper-2: #c6cad1;
+  --color-paper-3: #aeb3bb;
+  --color-cash: #62cfa5;
+  --color-copper: #e3a274;
+  --color-due: #e8cc62;
+  --color-over: #f28da0;
+  --shade-text-strong: #eaecef;
+  --shade-text-soft: #dadde2;
+  --shade-text-faint: #9ea3ac;
+  --shade-over-tint: #321820;
+  --shade-over-text: #f4bdc1;
+  --shade-over-mid: #f28da0;
+  --shade-over-fill: #a8344a;
+  --shade-cash-tint: #10291f;
+  --shade-cash-text: #b2e5cb;
+  --shade-cash-mid: #62cfa5;
+  --shade-copper-tint: #33241a;
+  --shade-copper-text: #ebb994;
+  --shade-due-text: #efdc8e;
+}
+
+:root[data-palette='linen'] {
+  --color-ink: #f7f5f0;
+  --color-ledger: #ffffff;
+  --color-ledger-2: #fcfbf8;
+  --color-ledger-3: #efece5;
+  --color-ledger-4: #e7e3da;
+  --color-rule: rgb(22 24 22 / 0.08);
+  --color-rule-strong: rgb(22 24 22 / 0.16);
+  --color-paper: #161816;
+  --color-paper-2: #41453f;
+  --color-paper-3: #525650;
+  --color-cash: #17694a;
+  --color-copper: #8a4a1f;
+  --color-due: #6e5700;
+  --color-over: #a12c38;
+  --shade-text-strong: #232622;
+  --shade-text-soft: #30332f;
+  --shade-text-faint: #60645e;
+  --shade-over-tint: #f8e4e6;
+  --shade-over-text: #80222c;
+  --shade-over-mid: #a12c38;
+  --shade-over-fill: #a12c38;
+  --shade-cash-tint: #dff0e8;
+  --shade-cash-text: #124f37;
+  --shade-cash-mid: #17694a;
+  --shade-copper-tint: #f3e4d6;
+  --shade-copper-text: #6d3a18;
+  --shade-due-text: #594600;
+}
+:root[data-palette='linen'][data-theme='dark'] {
+  --color-ink: #232220;
+  --color-ledger: #2b2a27;
+  --color-ledger-2: #312f2c;
+  --color-ledger-3: #383633;
+  --color-ledger-4: #413f3b;
+  --color-rule: rgb(241 238 231 / 0.07);
+  --color-rule-strong: rgb(241 238 231 / 0.14);
+  --color-paper: #f1eee7;
+  --color-paper-2: #c9c5bb;
+  --color-paper-3: #b9b5ab;
+  --color-cash: #84d4a8;
+  --color-copper: #e6a878;
+  --color-due: #ecd06c;
+  --color-over: #f39aa0;
+  --shade-text-strong: #e5e2da;
+  --shade-text-soft: #d9d5cd;
+  --shade-text-faint: #b0ada3;
+  --shade-over-tint: #3c2426;
+  --shade-over-text: #f6c6c9;
+  --shade-over-mid: #f39aa0;
+  --shade-over-fill: #a53743;
+  --shade-cash-tint: #1f3127;
+  --shade-cash-text: #c0e8d2;
+  --shade-cash-mid: #84d4a8;
+  --shade-copper-tint: #3f2f24;
+  --shade-copper-text: #eec09d;
+  --shade-due-text: #f0e09c;
+}
+
+:root[data-palette='fog'] {
+  --color-ink: #eef0ee;
+  --color-ledger: #ffffff;
+  --color-ledger-2: #f8f9f8;
+  --color-ledger-3: #e4e7e4;
+  --color-ledger-4: #dadeda;
+  --color-rule: rgb(20 24 26 / 0.08);
+  --color-rule-strong: rgb(20 24 26 / 0.16);
+  --color-paper: #14181a;
+  --color-paper-2: #3f4648;
+  --color-paper-3: #4f5759;
+  --color-cash: #0f6b57;
+  --color-copper: #8c4a2a;
+  --color-due: #6a5600;
+  --color-over: #a32d40;
+  --shade-text-strong: #212628;
+  --shade-text-soft: #2e3436;
+  --shade-text-faint: #596163;
+  --shade-over-tint: #f7e3e6;
+  --shade-over-text: #802233;
+  --shade-over-mid: #a32d40;
+  --shade-over-fill: #a32d40;
+  --shade-cash-tint: #dcefe9;
+  --shade-cash-text: #0b4f40;
+  --shade-cash-mid: #0f6b57;
+  --shade-copper-tint: #f2e3da;
+  --shade-copper-text: #6e391f;
+  --shade-due-text: #564500;
+}
+:root[data-palette='fog'][data-theme='dark'] {
+  --color-ink: #0e1211;
+  --color-ledger: #161b19;
+  --color-ledger-2: #1b211f;
+  --color-ledger-3: #212826;
+  --color-ledger-4: #2a3230;
+  --color-rule: rgb(232 236 234 / 0.07);
+  --color-rule-strong: rgb(232 236 234 / 0.14);
+  --color-paper: #e8ecea;
+  --color-paper-2: #b6bfbb;
+  --color-paper-3: #a0aaa6;
+  --color-cash: #6ccb9c;
+  --color-copper: #e0a071;
+  --color-due: #e6ca62;
+  --color-over: #f08e96;
+  --shade-text-strong: #d9dedc;
+  --shade-text-soft: #cad1ce;
+  --shade-text-faint: #929c98;
+  --shade-over-tint: #2f181b;
+  --shade-over-text: #f4bdc1;
+  --shade-over-mid: #f08e96;
+  --shade-over-fill: #a93a47;
+  --shade-cash-tint: #12271d;
+  --shade-cash-text: #b2e5cb;
+  --shade-cash-mid: #6ccb9c;
+  --shade-copper-tint: #31231a;
+  --shade-copper-text: #ebb994;
+  --shade-due-text: #efdc8e;
+}
+
+body {
+  margin: 0;
+  min-height: 100svh;
+  background: var(--color-ink);
+  color: var(--color-paper);
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Views still written with zinc utilities read from the paper palette instead. */
+.flow-app {
+  --color-zinc-50: var(--color-paper);
+  --color-zinc-100: var(--color-paper);
+  --color-zinc-200: var(--shade-text-strong);
+  --color-zinc-300: var(--shade-text-soft);
+  --color-zinc-400: var(--color-paper-2);
+  --color-zinc-500: var(--color-paper-3);
+  --color-zinc-600: var(--shade-text-faint);
+  --color-zinc-700: var(--color-rule-strong);
+  --color-zinc-800: var(--color-rule);
+  --color-zinc-900: var(--color-ledger);
+  --color-zinc-950: var(--color-ledger-2);
+  /* Hue utilities collapse onto the four meaning colors: over, cash, copper, due. */
+  --color-rose-50: var(--shade-over-tint);
+  --color-rose-200: var(--shade-over-text);
+  --color-rose-300: var(--shade-over-text);
+  --color-rose-400: var(--color-over);
+  --color-rose-500: var(--shade-over-mid);
+  --color-rose-600: var(--shade-over-mid);
+  --color-rose-700: var(--shade-over-fill);
+  --color-rose-800: var(--shade-over-text);
+  --color-rose-950: var(--shade-over-tint);
+  --color-emerald-50: var(--shade-cash-tint);
+  --color-emerald-200: var(--shade-cash-text);
+  --color-emerald-300: var(--shade-cash-text);
+  --color-emerald-400: var(--color-cash);
+  --color-emerald-500: var(--shade-cash-mid);
+  --color-emerald-600: var(--shade-cash-mid);
+  --color-emerald-700: var(--color-cash);
+  --color-emerald-800: var(--shade-cash-text);
+  --color-emerald-950: var(--shade-cash-tint);
+  --color-violet-200: var(--shade-copper-tint);
+  --color-violet-300: var(--shade-copper-text);
+  --color-violet-600: var(--color-copper);
+  --color-violet-700: var(--shade-copper-text);
+  --color-violet-900: var(--shade-copper-tint);
+  --color-amber-100: var(--shade-due-text);
+  --color-amber-200: var(--shade-due-text);
+  --color-amber-500: var(--color-due);
+  --color-amber-800: var(--shade-due-text);
+  --color-sky-300: var(--color-paper-2);
+  --color-sky-500: var(--color-paper-3);
+}
+
+/* The runway draws in once from today toward payday when its schedule changes. */
+.runway-draw {
+  animation: runway-draw 700ms var(--ease-out) both;
+}
+
+@keyframes runway-draw {
+  from { clip-path: inset(-12px 100% -12px 0); }
+  to { clip-path: inset(-12px 0 -12px 0); }
+}
+
+/* Amounts and dates: fixed-width figures so columns line up. */
+.money {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+}
+
+#root {
+  min-height: 100svh;
+}
+
+.pb-safe {
+  padding-bottom: calc(0.5rem + env(safe-area-inset-bottom));
+}
+
+/*
+ * iOS Safari zooms into any focused field under 16px. Unlayered on purpose, so it
+ * beats text-size utilities on touch screens and phones.
+ */
+@media (pointer: coarse), (max-width: 639px) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* Motion tokens. One easing family keeps every interaction feeling related. */
+:root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in: cubic-bezier(0.55, 0, 1, 0.45);
+  --ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Every control eases its color and press state instead of snapping. */
+@layer base {
+  button,
+  a,
+  input,
+  select,
+  textarea,
+  [role='switch'] {
+    transition-property: color, background-color, border-color, outline-color, box-shadow,
+      opacity, scale, translate;
+    transition-duration: 160ms;
+    transition-timing-function: var(--ease-out);
+  }
+
+  button:not(:disabled):active {
+    scale: 0.97;
+    transition-duration: 80ms;
+  }
+
+  :focus-visible {
+    outline: 2px solid color-mix(in srgb, var(--color-cash) 70%, transparent);
+    outline-offset: 2px;
+  }
+}
+
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fade-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Mobile sheets slide up from the bottom edge; centered dialogs scale in. */
+@keyframes sheet-in {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+@keyframes sheet-out {
+  from { transform: translateY(0); }
+  to { transform: translateY(100%); }
+}
+
+@keyframes dialog-in {
+  from { opacity: 0; transform: translateY(10px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes dialog-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(6px) scale(0.98); }
+}
+
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(-4px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes toast-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes rise-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fade-in 200ms var(--ease-out) both;
+}
+
+.fade-out {
+  animation: fade-out 180ms var(--ease-in) both;
+}
+
+.sheet-in {
+  animation: sheet-in 320ms var(--ease-out) both;
+}
+
+.sheet-out {
+  animation: sheet-out 220ms var(--ease-in) both;
+}
+
+@media (min-width: 640px) {
+  .sheet-in {
+    animation-name: dialog-in;
+    animation-duration: 240ms;
+  }
+  .sheet-out {
+    animation-name: dialog-out;
+    animation-duration: 160ms;
+  }
+}
+
+.dialog-in {
+  animation: dialog-in 240ms var(--ease-out) both;
+}
+
+.pop-in {
+  transform-origin: top right;
+  animation: pop-in 160ms var(--ease-out) both;
+}
+
+.toast-in {
+  animation: toast-in 220ms var(--ease-out) both;
+}
+
+.rise-in {
+  animation: rise-in 280ms var(--ease-out) both;
+}
+
+/* Ahead slip: rises like a receipt, the stamp presses and inks its check, the tally grows. */
+.slip-in {
+  animation: slip-in 520ms var(--ease-spring) both;
+}
+
+.slip-out {
+  animation: slip-out 220ms var(--ease-in) both;
+}
+
+@keyframes slip-in {
+  from { opacity: 0; transform: translateY(24px) scale(0.96); clip-path: inset(100% 0 0 0 round 16px); }
+  60% { clip-path: inset(0 0 0 0 round 16px); }
+  to { opacity: 1; transform: none; clip-path: inset(0 0 0 0 round 16px); }
+}
+
+@keyframes slip-out {
+  to { opacity: 0; transform: translateY(12px) scale(0.98); }
+}
+
+.stamp-press {
+  animation: stamp-press 420ms var(--ease-spring) 140ms both;
+}
+
+@keyframes stamp-press {
+  from { opacity: 0; transform: scale(1.5) rotate(-14deg); }
+  to { opacity: 1; transform: none; }
+}
+
+.stamp-ring,
+.stamp-check {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: ink 420ms var(--ease-out) forwards;
+}
+
+.stamp-ring { animation-delay: 200ms; }
+.stamp-check { animation-delay: 380ms; }
+
+@keyframes ink {
+  to { stroke-dashoffset: 0; }
+}
+
+.coin {
+  opacity: 0;
+  animation: coin 760ms var(--ease-out) forwards;
+}
+
+@keyframes coin {
+  0% { opacity: 1; transform: translate(-50%, -50%) scale(0.4); }
+  70% { opacity: 1; }
+  100% { opacity: 0; transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(1); }
+}
+
+.tally-grow {
+  transform-origin: bottom;
+  animation: tally-grow 460ms var(--ease-spring) backwards;
+}
+
+@keyframes tally-grow {
+  from { transform: scaleY(0); }
+}
+
+/* Bars that fill on arrival: budget envelopes, goal progress. */
+.bar-grow {
+  transform-origin: left;
+  animation: bar-grow 700ms var(--ease-spring) 120ms backwards;
+}
+
+@keyframes bar-grow {
+  from { transform: scaleX(0); }
+}
+
+/* Calendar: days ink in as a diagonal wave from the first of the period, so time reads
+   left to right, top to bottom. --i is row + column. Dots land just after their day. */
+.cal-day {
+  transition:
+    background-color 160ms var(--ease-out),
+    border-color 160ms var(--ease-out),
+    opacity 200ms var(--ease-out),
+    scale 140ms var(--ease-out);
+  animation: cal-day-in 420ms var(--ease-spring) backwards;
+  animation-delay: calc(min(var(--i, 0), 14) * 22ms);
+}
+
+.cal-day:not(:disabled):active {
+  scale: 0.96;
+}
+
+.cal-day-dim {
+  opacity: 0.4;
+}
+
+.cal-day .cal-dots > * {
+  animation: dot-pop 320ms var(--ease-spring) backwards;
+  animation-delay: calc(min(var(--i, 0), 14) * 22ms + 180ms);
+}
+
+@keyframes cal-day-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.94); }
+}
+
+@keyframes dot-pop {
+  from { opacity: 0; transform: scale(0); }
+}
+
+/* The selection ring glides between days; its first appearance draws in from a soft halo. */
+.cal-ring {
+  transition:
+    translate 340ms var(--ease-spring),
+    width 340ms var(--ease-spring),
+    height 340ms var(--ease-spring);
+}
+
+.cal-ring-fresh {
+  animation: ring-in 260ms var(--ease-out) both;
+}
+
+@keyframes ring-in {
+  from { opacity: 0; scale: 1.12; }
+}
+
+/* Day panel unfolds from the top; its date and items slide the way you moved through days. */
+.day-open {
+  animation: day-open 360ms var(--ease-spring) both;
+}
+
+@keyframes day-open {
+  from { opacity: 0; clip-path: inset(0 0 100% 0 round 12px); transform: translateY(-6px); }
+  to { opacity: 1; clip-path: inset(0 0 0 0 round 12px); transform: none; }
+}
+
+.day-swap {
+  animation: day-swap 300ms var(--ease-out) backwards;
+}
+
+@keyframes day-swap {
+  from { opacity: 0; transform: translateX(calc(var(--step, 0) * 12px)); }
+}
+
+/* Period label slides the way you stepped. */
+.period-step {
+  animation: period-step 280ms var(--ease-out) backwards;
+}
+
+@keyframes period-step {
+  from { opacity: 0; transform: translateX(calc(var(--step, 1) * 10px)); }
+}
+
+/* Sidebar highlight glides to the page you picked. */
+.nav-indicator {
+  transition:
+    translate 360ms var(--ease-spring),
+    height 360ms var(--ease-spring);
+}
+
+.page-in {
+  /* backwards, not both: a transform left on after the animation would turn this into
+     the containing block for position: fixed sheets and dialogs inside the page. */
+  animation: page-in 340ms var(--ease-spring) backwards;
+}
+
+/* Content stays visible while it settles: no blank first frame on page change.
+   --dir is +1 moving down the nav, -1 moving up, so pages arrive from where they sit. */
+@keyframes page-in {
+  from { opacity: 0.35; transform: translateY(calc(var(--dir, 1) * 14px)); filter: blur(2px); }
+  to { opacity: 1; transform: translateY(0); filter: blur(0); }
+}
+
+.stagger > * {
+  animation: rise-in 360ms var(--ease-out) backwards;
+}
+
+.stagger > *:nth-child(2) { animation-delay: 35ms; }
+.stagger > *:nth-child(3) { animation-delay: 70ms; }
+.stagger > *:nth-child(4) { animation-delay: 105ms; }
+.stagger > *:nth-child(5) { animation-delay: 140ms; }
+.stagger > *:nth-child(6) { animation-delay: 175ms; }
+.stagger > *:nth-child(n + 7) { animation-delay: 200ms; }
+
+.press {
+  transition:
+    scale 140ms var(--ease-out),
+    background-color 160ms var(--ease-out),
+    color 160ms var(--ease-out),
+    box-shadow 160ms var(--ease-out);
+}
+
+.press:not(:disabled):active {
+  scale: 0.96;
+}
+
+/* Sliding highlight behind the active tab. */
+.tab-indicator {
+  transition:
+    translate 340ms var(--ease-spring),
+    width 340ms var(--ease-spring);
+}
+
+/* Sankey: a left-to-right sweep on first paint, then labels settle in. Data changes
+   morph in JS (SankeyChart useMorph); hover dimming eases here. */
+@keyframes sankey-sweep {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+.sankey-reveal {
+  transform-origin: left center;
+  transform-box: fill-box;
+  animation: sankey-sweep 900ms var(--ease-out) both;
+}
+
+.sankey-link {
+  transition: stroke-opacity 240ms var(--ease-out);
+}
+
+/* Flows tuned for a dark card read heavy on paper; thin them in light mode. */
+:root:not([data-theme='dark']) .sankey-link {
+  opacity: 0.7;
+}
+
+.sankey-node rect {
+  transition: opacity 240ms var(--ease-out);
+}
+
+.sankey-label {
+  animation: fade-in 360ms var(--ease-out) both;
+  transition: opacity 240ms var(--ease-out);
+}
+
+/* Overview card surface: hairline ring that strengthens on hover. */
+.card-surface {
+  /* Borders-only depth: no shadows on paper or at night. */
+  background: var(--color-ledger);
+  box-shadow: inset 0 0 0 1px var(--color-rule);
+  transition: box-shadow 200ms var(--ease-out);
+}
+
+.card-surface:hover {
+  box-shadow: inset 0 0 0 1px var(--color-rule-strong);
+}
+
+.card-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-rule-strong) transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 1ms !important;
+  }
+
+  button:not(:disabled):active,
+  .press:not(:disabled):active {
+    scale: 1;
+  }
+
+  /* No travel or bursts; the slip and amounts still appear, just in place. */
+  .coin {
+    display: none;
+  }
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
