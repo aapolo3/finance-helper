@@ -84,7 +84,7 @@ export function AheadSlip() {
       onAnimationEnd={(event) => {
         if (leaving && event.target === event.currentTarget) setMoment(null)
       }}
-      className={`${leaving ? 'slip-out' : 'slip-in'} fixed inset-x-4 z-40 overflow-hidden rounded-2xl bg-ledger-3 p-4 text-paper shadow-[0_18px_40px_-12px_rgb(0_0_0/0.45)] ring-1 ring-rule-strong bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:inset-x-auto md:right-6 md:bottom-6 md:w-[22rem]`}
+      className={`${leaving ? 'slip-out' : 'slip-in'} fixed inset-x-4 z-40 overflow-hidden rounded-2xl bg-ledger-3 p-4 text-paper shadow-[0_18px_40px_-12px_rgb(0_0_0/0.45)] ring-1 ring-rule-strong bottom-[calc(var(--phone-nav-top)+0.75rem)] md:inset-x-auto md:right-6 md:bottom-6 md:w-[22rem]`}
     >
       <div className="flex items-start gap-3.5">
         <Stamp burst={moment.milestone} />

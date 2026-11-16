@@ -386,7 +386,7 @@ export function Expenses({
       )}
 
       {!viewingExpense && !viewingIncome && !editingExpense && !editingIncome && (
-        <div className="fixed inset-x-0 z-10 flex gap-2 border-t border-zinc-200 bg-white px-4 py-2 md:hidden dark:border-zinc-800 dark:bg-zinc-950 bottom-[calc(3.25rem+env(safe-area-inset-bottom,0px))]">
+        <div className="fixed inset-x-0 z-10 flex gap-2 border-t border-zinc-200 bg-white px-5 py-3 md:hidden dark:border-zinc-800 dark:bg-zinc-950 bottom-[var(--phone-nav-top)]">
           <button
             type="button"
             onClick={() => setEditingIncome({ mode: 'add' })}

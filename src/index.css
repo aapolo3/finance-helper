@@ -612,6 +612,15 @@ body {
   }
 }
 
+/*
+ * Phone nav height, safe area excluded. Toasts, menus and action bars sit on top
+ * of it through --phone-nav-top, so they move together if the nav changes.
+ */
+:root {
+  --phone-nav: 4.5rem;
+  --phone-nav-top: calc(var(--phone-nav) + env(safe-area-inset-bottom, 0px));
+}
+
 /* Motion tokens. One easing family keeps every interaction feeling related. */
 :root {
   --ease-out: cubic-bezier(0.22, 1, 0.36, 1);

@@ -22,7 +22,7 @@ export function Toast({
   return (
     <div
       role="status"
-      className="toast-in fixed inset-x-4 z-40 flex items-center justify-between gap-3 rounded-xl bg-ledger-4 px-4 py-2 text-sm text-paper shadow-lg ring-1 ring-rule-strong bottom-[calc(4.75rem+env(safe-area-inset-bottom,0px))] md:inset-x-auto md:right-6 md:bottom-6 md:min-w-80"
+      className="toast-in fixed inset-x-4 z-40 flex items-center justify-between gap-3 rounded-xl bg-ledger-4 px-4 py-2 text-sm text-paper shadow-lg ring-1 ring-rule-strong bottom-[calc(var(--phone-nav-top)+0.75rem)] md:inset-x-auto md:right-6 md:bottom-6 md:min-w-80"
     >
       <span>{children}</span>
       <button

@@ -109,8 +109,8 @@ export default function App() {
     <div className="flow-app dark min-h-svh bg-ink text-paper">
       <Sidebar page={page} onSelect={setPage} email={authUser?.email} />
       <div className="md:pl-[232px]">
-        <div className="px-4 pt-4 pb-28 sm:px-6 md:pt-8 md:pb-10 lg:px-10 2xl:px-12">
-          <div className="mb-4 md:hidden">
+        <div className="px-5 pt-5 pb-[calc(var(--phone-nav-top)+2rem)] sm:px-6 md:pt-8 md:pb-10 lg:px-10 2xl:px-12">
+          <div className="mb-6 md:hidden">
             <div className="mb-3 flex items-center justify-between">
               <span className="font-display text-xl">Flow</span>
               {authUser?.email && <span className="truncate text-xs text-paper-3">{authUser.email}</span>}
@@ -311,13 +311,19 @@ function PhoneNav({
     return () => document.removeEventListener('pointerdown', close)
   }, [moreOpen])
 
+  // Any other tap in the nav closes the More menu.
+  const select = (id: PageId) => {
+    setMoreOpen(false)
+    onSelect(id)
+  }
+
   const tab = (id: PageId | 'more', label: string, icon: string, active: boolean, onClick: () => void) => (
     <button
       key={id}
       type="button"
       aria-current={active ? 'page' : undefined}
       onClick={onClick}
-      className={`press flex min-h-12 flex-col items-center justify-center gap-0.5 rounded-xl text-xs ${
+      className={`press flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-xs ${
         active ? 'text-paper' : 'text-paper-3'
       }`}
     >
@@ -329,7 +335,7 @@ function PhoneNav({
   return (
     <div ref={ref} className="md:hidden">
       {moreOpen && (
-        <div className="pop-in fixed right-3 bottom-[calc(4.5rem+env(safe-area-inset-bottom))] z-40 w-48 rounded-xl bg-ledger-4 p-1 shadow-2xl ring-1 ring-rule-strong">
+        <div className="pop-in fixed right-3 bottom-[calc(var(--phone-nav-top)+0.5rem)] z-40 w-48 rounded-xl bg-ledger-4 p-1 shadow-2xl ring-1 ring-rule-strong">
           {PAGES.filter((item) => !PHONE_TABS.includes(item.id)).map((item) => (
             <button
               key={item.id}
@@ -350,16 +356,19 @@ function PhoneNav({
       )}
       <nav
         aria-label="Primary"
-        className="pb-safe fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-rule bg-ink px-1 pt-1"
+        className="pb-safe fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-rule bg-ink px-2 pt-2"
       >
         {PAGES.filter((item) => PHONE_TABS.includes(item.id))
           .slice(0, 2)
-          .map((item) => tab(item.id, item.label, item.icon, page === item.id, () => onSelect(item.id)))}
+          .map((item) => tab(item.id, item.label, item.icon, page === item.id, () => select(item.id)))}
         <div className="flex items-center justify-center">
           <button
             type="button"
             aria-label="Add income or expense"
-            onClick={onLog}
+            onClick={() => {
+              setMoreOpen(false)
+              onLog()
+            }}
             className="press flex h-12 w-12 items-center justify-center rounded-full bg-paper text-ink"
           >
             <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" aria-hidden="true">
@@ -369,7 +378,7 @@ function PhoneNav({
         </div>
         {PAGES.filter((item) => PHONE_TABS.includes(item.id))
           .slice(2)
-          .map((item) => tab(item.id, item.label, item.icon, page === item.id, () => onSelect(item.id)))}
+          .map((item) => tab(item.id, item.label, item.icon, page === item.id, () => select(item.id)))}
         {tab('more', 'More', 'M5 10h.01M10 10h.01M15 10h.01', inMore || moreOpen, () =>
           setMoreOpen((open) => !open),
         )}

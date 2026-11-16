@@ -114,7 +114,7 @@ export function ExpensesBoard({
 
   return (
     <div className="flex flex-col gap-4 md:flex-row md:items-start">
-      <nav className="-mx-4 flex gap-1.5 overflow-x-auto px-4 md:sticky md:top-4 md:mx-0 md:w-56 md:shrink-0 md:flex-col md:gap-0.5 md:overflow-visible md:px-0">
+      <nav className="-mx-5 flex gap-1.5 overflow-x-auto px-5 sm:-mx-6 sm:px-6 md:sticky md:top-4 md:mx-0 md:w-56 md:shrink-0 md:flex-col md:gap-0.5 md:overflow-visible md:px-0">
         {nav.map((item) => (
           <button
             key={item.id}
@@ -134,7 +134,7 @@ export function ExpensesBoard({
           </button>
         ))}
       </nav>
-      <div className="min-w-0 flex-1 space-y-4">
+      <div className="min-w-0 flex-1 space-y-5 md:space-y-4">
         <div className="relative">
           <svg
             viewBox="0 0 20 20"
@@ -154,7 +154,7 @@ export function ExpensesBoard({
           />
         </div>
         {current !== 'income' && !searching && (
-          <div className="-m-1 flex gap-1.5 overflow-x-auto p-1">
+          <div className="-mx-1 flex gap-1.5 overflow-x-auto p-1">
             {FILTERS.map((option) => (
               <button
                 key={option.id}
