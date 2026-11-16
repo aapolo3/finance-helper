@@ -20,7 +20,7 @@ export function Toggle({ checked, onChange, label, size = 'md' }: ToggleProps) {
       <span
         className={`relative block rounded-full transition-colors duration-200 ease-out ${
           small ? 'h-6 w-10' : 'h-8 w-14'
-        } ${checked ? 'bg-emerald-600' : 'bg-zinc-400 dark:bg-zinc-600'}`}
+        } ${checked ? 'bg-cash' : 'bg-paper-3'}`}
       >
         <span
           className={`absolute rounded-full bg-white shadow-sm transition-transform duration-200 ease-out ${

@@ -125,7 +125,7 @@ export function Runway({ currency }: { currency: string }) {
       >
         {over ? '−' : ''}
         {formatMoney(whole, currency).split('.')[0]}
-        {cents != null && <span className="text-paper-3">.{cents}</span>}
+        {cents != null && <span className="opacity-55">.{cents}</span>}
       </p>
       <p className="mt-2 text-sm text-paper-2">
         {bills.length > 0 ? (
@@ -153,9 +153,9 @@ export function Runway({ currency }: { currency: string }) {
         )}
       </p>
       {tone === 'tight' && (
-        <p className="mt-1 text-sm text-cash">
+        <p className="mt-1 text-sm text-paper-2">
           Covered by {payday ? `${format(payday.date, 'EEEE')}'s` : 'your next'} paycheck · month ends at{' '}
-          <Money value={monthEndBalance} currency={currency} tone="cash" />
+          <Money value={monthEndBalance} currency={currency} />
         </p>
       )}
 

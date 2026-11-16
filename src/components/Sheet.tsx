@@ -115,7 +115,7 @@ export function Sheet({
         aria-modal="true"
         aria-labelledby={titleId}
         tabIndex={-1}
-        className={`outline-none ${closing ? 'sheet-out' : skipEnter ? '' : 'sheet-in'} relative z-10 grid h-full w-full grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-white dark:bg-zinc-900 sm:h-auto sm:max-h-[min(90dvh,100%)] sm:max-w-md sm:rounded-2xl`}
+        className={`outline-none ${closing ? 'sheet-out' : skipEnter ? '' : 'sheet-in'} relative z-10 grid h-full w-full grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-ledger sm:h-auto sm:max-h-[min(90dvh,100%)] sm:max-w-md sm:rounded-2xl`}
       >
         <div className="px-5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-1">
           <div className="flex items-center justify-between gap-3">
@@ -140,7 +140,7 @@ export const sheetFormClass =
 export const sheetBodyClass =
   'min-h-0 touch-pan-y space-y-3 overflow-y-auto overscroll-contain px-5 py-3'
 export const sheetFooterClass =
-  'flex justify-end gap-2 border-t border-zinc-200 bg-white px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] dark:border-zinc-800 dark:bg-zinc-900'
+  'flex justify-end gap-2 border-t border-rule bg-ledger px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]'
 
 /** Check and X for mobile editors. Desktop keeps the footer buttons. */
 export function MobileFormActions({

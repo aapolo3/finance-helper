@@ -270,7 +270,7 @@ export function Expenses({
   })
 
   return (
-    <div className="space-y-8 pb-28 md:pb-0">
+    <div className="space-y-8">
       <PageHeader
         title="Cash flow"
         subtitle={`Toggle items off to see how ${periodLabel(meta.view, range)} changes`}
@@ -388,25 +388,6 @@ export function Expenses({
         />
       )}
 
-
-      {!viewingExpense && !viewingIncome && !editingExpense && !editingIncome && (
-        <div className="fixed inset-x-0 z-10 flex gap-2 border-t border-zinc-200 bg-white px-5 py-3 md:hidden dark:border-zinc-800 dark:bg-zinc-950 bottom-[var(--phone-nav-top)]">
-          <button
-            type="button"
-            onClick={() => setEditingIncome({ mode: 'add' })}
-            className="press min-h-11 flex-1 rounded-full bg-white text-sm ring-1 ring-zinc-200 dark:bg-zinc-900 dark:ring-zinc-700"
-          >
-            Add income
-          </button>
-          <button
-            type="button"
-            onClick={() => setEditingExpense({ mode: 'add' })}
-            className="press min-h-11 flex-1 rounded-lg bg-zinc-900 text-sm text-white dark:bg-zinc-100 dark:text-zinc-900 font-medium"
-          >
-            Add expense
-          </button>
-        </div>
-      )}
 
       {viewingExpense && (
         <ExpenseOverview
@@ -1400,7 +1381,7 @@ function ExpenseEditor({
 }
 
 const inputClass =
-  'mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-950'
+  'mt-1 w-full rounded-xl border border-paper-3 bg-ledger-2 px-3 py-2'
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (

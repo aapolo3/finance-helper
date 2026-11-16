@@ -366,7 +366,7 @@ function GoalEditor({
 }
 
 const inputClass =
-  'mt-1 w-full rounded-xl border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-950'
+  'mt-1 w-full rounded-xl border border-paper-3 bg-ledger-2 px-3 py-2'
 
 function Field({ label, children }: { label: string; children: ReactNode }) {
   return (

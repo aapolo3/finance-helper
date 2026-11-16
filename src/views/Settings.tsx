@@ -280,11 +280,12 @@ export function Settings() {
       </section>
 
       <section className="card-surface rounded-xl p-5">
-        <h2 className="font-medium">Currency</h2>
+        <h2 id="currency-label" className="font-medium">Currency</h2>
         <select
+          aria-labelledby="currency-label"
           value={meta.currency}
           onChange={(e) => setCurrency(e.target.value)}
-          className="mt-2 rounded-xl border border-zinc-200 bg-white px-3 py-2 dark:border-zinc-700 dark:bg-zinc-950"
+          className="mt-2 rounded-xl border border-paper-3 bg-ledger-2 px-3 py-2"
         >
           {['USD', 'EUR', 'GBP', 'CAD', 'AUD', 'MXN'].map((code) => (
             <option key={code} value={code}>

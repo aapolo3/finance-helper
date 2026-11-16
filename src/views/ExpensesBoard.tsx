@@ -155,7 +155,7 @@ export function ExpensesBoard({
             onChange={(event) => setQuery(event.target.value)}
             aria-label="Search income and expenses"
             placeholder="Search by name or category"
-            className="min-h-10 w-full rounded-xl bg-transparent pr-3 pl-9 text-sm text-paper ring-1 ring-rule-strong placeholder:text-paper-3"
+            className="min-h-10 w-full rounded-xl bg-transparent pr-3 pl-9 text-sm text-paper ring-1 ring-paper-3 placeholder:text-paper-3"
           />
         </div>
         {current !== 'income' && !searching && (
