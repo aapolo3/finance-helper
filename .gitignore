@@ -33,3 +33,7 @@ serviceAccountKey.json
 
 # Bank exports
 *.csv
+# Design tool folders
+.impeccable/
+.interface-design/
+docs/
