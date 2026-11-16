@@ -7,6 +7,7 @@ import {
   useMemo,
   useRef,
   useState,
+  type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react'
@@ -19,6 +20,7 @@ import {
   growCard,
   hideCard,
   isOverviewCardId,
+  moveCard,
   readOverviewLayout,
   resizeCard,
   showCard,
@@ -224,6 +226,21 @@ export function OverviewGrid({
     })
   }
 
+  // Keyboard alternative to dragging: arrow keys move or resize the card one cell.
+  const nudge = (id: OverviewCardId, mode: Drag['mode'], event: ReactKeyboardEvent<HTMLButtonElement>) => {
+    const step = ARROW_STEPS[event.key]
+    if (!step) return
+    event.preventDefault()
+    const [dx, dy] = step
+    setLayout((current) => {
+      const item = current.find((entry) => entry.id === id)
+      if (!item) return current
+      return mode === 'move'
+        ? moveCard(current, id, Math.max(0, item.x + dx), Math.max(0, item.y + dy))
+        : resizeCard(current, id, Math.max(1, item.w + dx), Math.max(1, item.h + dy))
+    })
+  }
+
   const onDragMove = (event: ReactPointerEvent<HTMLButtonElement>) => {
     const current = dragRef.current
     if (!current) return
@@ -386,6 +403,9 @@ export function OverviewGrid({
                     <button
                       type="button"
                       aria-label={`Move ${label}`}
+                      aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"
+                      title="Drag, or use the arrow keys"
+                      onKeyDown={(event) => nudge(item.id, 'move', event)}
                       onPointerDown={(event) => startDrag(item.id, 'move', event)}
                       onPointerMove={onDragMove}
                       onPointerUp={endDrag}
@@ -412,6 +432,9 @@ export function OverviewGrid({
                 <button
                   type="button"
                   aria-label={`Resize ${label}`}
+                  aria-keyshortcuts="ArrowUp ArrowDown ArrowLeft ArrowRight"
+                  title="Drag, or use the arrow keys"
+                  onKeyDown={(event) => nudge(item.id, 'resize', event)}
                   onPointerDown={(event) => startDrag(item.id, 'resize', event)}
                   onPointerMove={onDragMove}
                   onPointerUp={endDrag}
@@ -499,4 +522,11 @@ function CloseIcon() {
       <path d="M4.5 4.5l7 7M11.5 4.5l-7 7" strokeLinecap="round" />
     </svg>
   )
+}
+
+const ARROW_STEPS: Record<string, [number, number]> = {
+  ArrowLeft: [-1, 0],
+  ArrowRight: [1, 0],
+  ArrowUp: [0, -1],
+  ArrowDown: [0, 1],
 }

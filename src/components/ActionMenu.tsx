@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
+import { useEscapeLayer } from '../lib/layers'
 
 export type MenuAction = {
   label: string
@@ -13,6 +14,7 @@ export function ActionMenu({ label, actions }: { label: string; actions: MenuAct
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
   const menuRef = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
   const [place, setPlace] = useState<{ top: number; right: number } | null>(null)
 
   // The menu renders in a portal so later rows (each its own stacking context from the
@@ -36,11 +38,38 @@ export function ActionMenu({ label, actions }: { label: string; actions: MenuAct
     }
   }, [open])
 
+  // Closing from the keyboard hands focus back to the "⋯" button.
+  const closeToTrigger = () => {
+    setOpen(false)
+    triggerRef.current?.focus()
+  }
+  useEscapeLayer(open, closeToTrigger)
+
+  // Opening moves focus to the first item, as a menu should.
+  useEffect(() => {
+    if (open) menuRef.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus()
+  }, [open])
+
+  const onMenuKey = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    const items = [...(menuRef.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [])]
+    if (items.length === 0) return
+    const index = items.indexOf(document.activeElement as HTMLElement)
+    const go = (next: number) => {
+      event.preventDefault()
+      items[(next + items.length) % items.length].focus()
+    }
+    if (event.key === 'ArrowDown') go(index + 1)
+    else if (event.key === 'ArrowUp') go(index - 1)
+    else if (event.key === 'Home') go(0)
+    else if (event.key === 'End') go(items.length - 1)
+    else if (event.key === 'Tab') {
+      event.preventDefault()
+      closeToTrigger()
+    }
+  }
+
   useEffect(() => {
     if (!open) return
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false)
-    }
     const onPointer = (event: PointerEvent) => {
       if (
         event.target instanceof Node &&
@@ -49,12 +78,8 @@ export function ActionMenu({ label, actions }: { label: string; actions: MenuAct
         return
       setOpen(false)
     }
-    document.addEventListener('keydown', onKey)
     document.addEventListener('pointerdown', onPointer)
-    return () => {
-      document.removeEventListener('keydown', onKey)
-      document.removeEventListener('pointerdown', onPointer)
-    }
+    return () => document.removeEventListener('pointerdown', onPointer)
   }, [open])
 
   const safe = actions.filter((action) => !action.danger)
@@ -65,8 +90,10 @@ export function ActionMenu({ label, actions }: { label: string; actions: MenuAct
       key={action.label}
       type="button"
       role="menuitem"
+      tabIndex={-1}
       onClick={() => {
-        setOpen(false)
+        // Focus the trigger first, so a sheet the action opens returns focus to it.
+        closeToTrigger()
         action.onSelect()
       }}
       className={`flex min-h-10 w-full items-center gap-2.5 rounded-lg px-3 text-left text-sm hover:bg-black/5 dark:hover:bg-rule ${
@@ -81,6 +108,7 @@ export function ActionMenu({ label, actions }: { label: string; actions: MenuAct
   return (
     <div ref={ref} className="relative shrink-0">
       <button
+        ref={triggerRef}
         type="button"
         aria-label={label}
         aria-haspopup="menu"
@@ -97,6 +125,8 @@ export function ActionMenu({ label, actions }: { label: string; actions: MenuAct
         <div
           ref={menuRef}
           role="menu"
+          aria-label={label}
+          onKeyDown={onMenuKey}
           style={{ top: place?.top ?? -9999, right: place?.right ?? 0 }}
           className="pop-in fixed z-50 w-48 rounded-xl bg-white p-1 shadow-2xl ring-1 ring-zinc-200 dark:bg-ledger-4 dark:ring-rule-strong"
         >

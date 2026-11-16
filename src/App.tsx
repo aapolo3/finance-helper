@@ -1,4 +1,5 @@
-import { lazy, Suspense, useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { lazy, Suspense, useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react'
+import { useEscapeLayer } from './lib/layers'
 import { AheadSlip } from './components/AheadSlip'
 import { usePeriodSlide } from './lib/usePeriodSlide'
 import { AppearanceSwitch } from './components/AppearanceSwitch'
@@ -299,7 +300,19 @@ function PhoneNav({
 }) {
   const [moreOpen, setMoreOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
+  const moreRef = useRef<HTMLButtonElement>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+  const menuId = useId()
   const inMore = !PHONE_TABS.includes(page)
+
+  // Escape closes the menu and returns focus to More; opening focuses the first page.
+  useEscapeLayer(moreOpen, () => {
+    setMoreOpen(false)
+    moreRef.current?.focus()
+  })
+  useEffect(() => {
+    if (moreOpen) menuRef.current?.querySelector<HTMLElement>('button')?.focus()
+  }, [moreOpen])
 
   useEffect(() => {
     if (!moreOpen) return
@@ -317,7 +330,7 @@ function PhoneNav({
     onSelect(id)
   }
 
-  const tab = (id: PageId | 'more', label: string, icon: string, active: boolean, onClick: () => void) => (
+  const tab = (id: PageId, label: string, icon: string, active: boolean, onClick: () => void) => (
     <button
       key={id}
       type="button"
@@ -335,11 +348,15 @@ function PhoneNav({
   return (
     <div ref={ref} className="md:hidden">
       {moreOpen && (
-        <div className="pop-in fixed right-3 bottom-[calc(var(--phone-nav-top)+0.5rem)] z-40 w-48 rounded-xl bg-ledger-4 p-1 shadow-2xl ring-1 ring-rule-strong">
+        <div
+          ref={menuRef}
+          id={menuId}
+          className="pop-in fixed right-3 bottom-[calc(var(--phone-nav-top)+0.5rem)] z-40 w-48 rounded-xl bg-ledger-4 p-1 shadow-2xl ring-1 ring-rule-strong">
           {PAGES.filter((item) => !PHONE_TABS.includes(item.id)).map((item) => (
             <button
               key={item.id}
               type="button"
+              aria-current={page === item.id ? 'page' : undefined}
               onClick={() => {
                 onSelect(item.id)
                 setMoreOpen(false)
@@ -379,9 +396,21 @@ function PhoneNav({
         {PAGES.filter((item) => PHONE_TABS.includes(item.id))
           .slice(2)
           .map((item) => tab(item.id, item.label, item.icon, page === item.id, () => select(item.id)))}
-        {tab('more', 'More', 'M5 10h.01M10 10h.01M15 10h.01', inMore || moreOpen, () =>
-          setMoreOpen((open) => !open),
-        )}
+        {/* Current only when the page lives in More; an open menu shows as expanded instead. */}
+        <button
+          ref={moreRef}
+          type="button"
+          aria-current={inMore ? 'page' : undefined}
+          aria-expanded={moreOpen}
+          aria-controls={moreOpen ? menuId : undefined}
+          onClick={() => setMoreOpen((open) => !open)}
+          className={`press flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl text-xs ${
+            inMore || moreOpen ? 'text-paper' : 'text-paper-3'
+          }`}
+        >
+          <NavIcon d="M5 10h.01M10 10h.01M15 10h.01" />
+          More
+        </button>
       </nav>
     </div>
   )
