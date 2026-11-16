@@ -1,4 +1,7 @@
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useId, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
+import { useDialogFocus } from '../lib/dialogFocus'
+import { useEscapeLayer } from '../lib/layers'
 
 const EXIT_MS = 220
 
@@ -69,13 +72,10 @@ export function Sheet({
     }
   }, [])
 
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') requestClose()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [requestClose])
+  useEscapeLayer(true, requestClose)
+  const panelRef = useRef<HTMLDivElement>(null)
+  const titleId = useId()
+  useDialogFocus(panelRef)
 
   // iOS keeps the layout viewport tall under the keyboard, so fit the sheet to what is visible.
   const overlayRef = useRef<HTMLDivElement>(null)
@@ -99,23 +99,27 @@ export function Sheet({
     }
   }, [])
 
-  return (
+  // On <body>, so a page's enter animation can't trap the sheet below the phone nav.
+  return createPortal(
     <div ref={overlayRef} className={`${closing ? 'fade-out' : skipEnter ? '' : 'fade-in'} fixed inset-0 z-50 bg-black/40 sm:flex sm:items-center sm:justify-center sm:p-4`}>
       <button
         type="button"
         className="absolute inset-0"
         aria-label="Close"
+        tabIndex={-1}
         onClick={requestClose}
       />
       <div
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
-        aria-label={title}
-        className={`${closing ? 'sheet-out' : skipEnter ? '' : 'sheet-in'} relative z-10 grid h-full w-full grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-white dark:bg-zinc-900 sm:h-auto sm:max-h-[min(90dvh,100%)] sm:max-w-md sm:rounded-2xl`}
+        aria-labelledby={titleId}
+        tabIndex={-1}
+        className={`outline-none ${closing ? 'sheet-out' : skipEnter ? '' : 'sheet-in'} relative z-10 grid h-full w-full grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-white dark:bg-zinc-900 sm:h-auto sm:max-h-[min(90dvh,100%)] sm:max-w-md sm:rounded-2xl`}
       >
         <div className="px-5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-1">
           <div className="flex items-center justify-between gap-3">
-            <h2 className="font-display text-xl tracking-[-0.01em] text-paper">
+            <h2 id={titleId} className="font-display text-xl tracking-[-0.01em] text-paper">
               {title}
             </h2>
             {mobileActions ? (
@@ -126,7 +130,8 @@ export function Sheet({
         </div>
         {children}
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 

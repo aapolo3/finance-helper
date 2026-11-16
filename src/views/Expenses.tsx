@@ -1,5 +1,8 @@
 import { format } from 'date-fns'
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { createPortal } from 'react-dom'
+import { useDialogFocus } from '../lib/dialogFocus'
+import { useEscapeLayer } from '../lib/layers'
 import {
   MobileFormActions,
   Sheet,
@@ -384,6 +387,7 @@ export function Expenses({
           }}
         />
       )}
+
 
       {!viewingExpense && !viewingIncome && !editingExpense && !editingIncome && (
         <div className="fixed inset-x-0 z-10 flex gap-2 border-t border-zinc-200 bg-white px-5 py-3 md:hidden dark:border-zinc-800 dark:bg-zinc-950 bottom-[var(--phone-nav-top)]">
@@ -1422,6 +1426,9 @@ function MonthToggleDialog({
   onPick: (scope: MonthToggleScope | 'all') => void
   onClose: () => void
 }) {
+  const panelRef = useRef<HTMLDivElement>(null)
+  useDialogFocus(panelRef)
+  useEscapeLayer(true, onClose)
   const [year, monthIndex] = month.split('-').map(Number)
   const monthName = format(new Date(year, (monthIndex ?? 1) - 1, 1), 'MMMM yyyy')
   const deleteOptions: { scope: MonthToggleScope | 'all'; title: string; detail: string }[] = [
@@ -1494,14 +1501,16 @@ function MonthToggleDialog({
         },
       ]
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4">
-      <button type="button" className="absolute inset-0" aria-label="Cancel" onClick={onClose} />
+  return createPortal(
+    <div className="fade-in fixed inset-0 z-50 flex items-end justify-center bg-black/40 p-0 sm:items-center sm:p-4">
+      <button type="button" className="absolute inset-0" aria-label="Cancel" tabIndex={-1} onClick={onClose} />
       <div
+        ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="month-toggle-title"
-        className="relative z-10 w-full max-w-md rounded-t-2xl bg-white p-5 shadow-xl dark:bg-zinc-900 sm:rounded-2xl"
+        tabIndex={-1}
+        className="sheet-in relative z-10 w-full max-w-md rounded-t-2xl bg-ledger p-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] shadow-xl outline-none sm:rounded-2xl"
       >
         <h2 id="month-toggle-title" className="text-lg font-semibold text-zinc-900 dark:text-zinc-50">
           {action === 'delete'
@@ -1532,7 +1541,8 @@ function MonthToggleDialog({
           Cancel
         </button>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 

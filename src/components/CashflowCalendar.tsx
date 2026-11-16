@@ -4,6 +4,9 @@ import {
   isToday,
 } from 'date-fns'
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { useDialogFocus } from '../lib/dialogFocus'
+import { useEscapeLayer } from '../lib/layers'
 import {
   calendarEvents,
   calendarGridDays,
@@ -349,23 +352,28 @@ function DaySheet({
   reservedNote?: string
   onClose: () => void
 }) {
-  useEffect(() => {
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose()
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [onClose])
+  const panelRef = useRef<HTMLDivElement>(null)
+  useDialogFocus(panelRef)
+  useEscapeLayer(true, onClose)
 
-  return (
-    <div className="fade-in fixed inset-0 z-30 flex items-end justify-center bg-black/40">
+  // On <body> above the phone nav, so the nav never covers the bottom of the sheet.
+  return createPortal(
+    <div className="fade-in fixed inset-0 z-50 flex items-end justify-center bg-black/40">
       <button
         type="button"
         className="absolute inset-0"
         aria-label="Close"
+        tabIndex={-1}
         onClick={onClose}
       />
-      <div className="sheet-in relative z-10 max-h-[90svh] w-full overflow-y-auto rounded-t-3xl bg-white p-5 pb-8 shadow-xl dark:bg-zinc-900">
+      <div
+        ref={panelRef}
+        role="dialog"
+        aria-modal="true"
+        aria-label={format(day, 'EEEE, MMMM d')}
+        tabIndex={-1}
+        className="sheet-in relative z-10 max-h-[90svh] w-full overflow-y-auto rounded-t-3xl bg-ledger p-5 pb-[max(2rem,env(safe-area-inset-bottom))] shadow-xl outline-none"
+      >
         <div className="mb-3 flex items-start justify-between gap-3">
           <p
             key={day.toDateString()}
@@ -384,7 +392,8 @@ function DaySheet({
         </div>
         <DayDetail {...detail} day={day} step={step} embedded />
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }
 

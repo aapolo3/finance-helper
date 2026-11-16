@@ -10,6 +10,7 @@ import {
   type PointerEvent as ReactPointerEvent,
   type ReactNode,
 } from 'react'
+import { useEscapeLayer } from '../lib/layers'
 import {
   OVERVIEW_CARD_SPECS,
   OVERVIEW_COLUMNS,
@@ -176,16 +177,12 @@ export function OverviewGrid({
     lastRects.current = next
   })
 
-  useEffect(() => {
+  // Escape during a drag puts the layout back.
+  useEscapeLayer(drag != null, () => {
     if (!drag) return
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key !== 'Escape') return
-      setLayout(drag.snapshot)
-      setDrag(null)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [drag])
+    setLayout(drag.snapshot)
+    setDrag(null)
+  })
 
   const slots = new Map<OverviewCardId, ReactNode>()
   Children.forEach(children, (child) => {

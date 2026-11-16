@@ -1,5 +1,6 @@
 import { addDays, format, formatISO, startOfDay } from 'date-fns'
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
+import { useEscapeLayer } from '../lib/layers'
 import { BalanceChart, periodBalanceSeries } from '../components/BalanceChart'
 import { CashflowCalendar } from '../components/CashflowCalendar'
 import { OverviewCard, OverviewGrid } from '../components/OverviewGrid'
@@ -906,21 +907,15 @@ function DashboardMenu({
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
+  useEscapeLayer(open, () => setOpen(false))
   useEffect(() => {
     if (!open) return
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false)
-    }
     const onPointer = (event: PointerEvent) => {
       if (ref.current && event.target instanceof Node && ref.current.contains(event.target)) return
       setOpen(false)
     }
-    document.addEventListener('keydown', onKey)
     document.addEventListener('pointerdown', onPointer)
-    return () => {
-      document.removeEventListener('keydown', onKey)
-      document.removeEventListener('pointerdown', onPointer)
-    }
+    return () => document.removeEventListener('pointerdown', onPointer)
   }, [open])
 
   return (
@@ -1002,21 +997,15 @@ function CustomizeMenu({
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
 
+  useEscapeLayer(open, () => setOpen(false))
   useEffect(() => {
     if (!open) return
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setOpen(false)
-    }
     const onPointer = (event: PointerEvent) => {
       if (ref.current && event.target instanceof Node && ref.current.contains(event.target)) return
       setOpen(false)
     }
-    document.addEventListener('keydown', onKey)
     document.addEventListener('pointerdown', onPointer)
-    return () => {
-      document.removeEventListener('keydown', onKey)
-      document.removeEventListener('pointerdown', onPointer)
-    }
+    return () => document.removeEventListener('pointerdown', onPointer)
   }, [open])
 
   return (
