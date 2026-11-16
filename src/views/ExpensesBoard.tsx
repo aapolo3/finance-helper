@@ -1,9 +1,10 @@
 import { useMemo, useState, type ReactNode } from 'react'
 import { formatMoney } from '../domain/money'
 import type { Expense, IncomeSource } from '../domain/types'
+import { boardView, type BoardBucket, type BoardFilter } from '../domain/boardView'
 
-type Bucket = 'upcoming' | 'past' | 'later'
-type Filter = Bucket | 'pastIncome'
+type Bucket = BoardBucket
+type Filter = BoardFilter
 type Grouped = [string, Record<Bucket, Expense[]>][]
 
 /** This month is the default, so paid, not-due and past items stay out of the way. */
@@ -52,6 +53,12 @@ export function ExpensesBoard({
   const needle = query.trim().toLowerCase()
   // A search looks past the status filter, so a paid or not-due match is never hidden.
   const searching = needle.length > 0
+  // A category deleted while picked falls back to All.
+  const current =
+    picked === 'all' || picked === 'income' || grouped.some(([name]) => name === picked)
+      ? picked
+      : 'all'
+  const view = boardView(current, filter)
 
   const categories = useMemo(
     () =>
@@ -62,13 +69,13 @@ export function ExpensesBoard({
             ? buckets[bucket]
                 .filter((expense) => matchesSearch(needle, expense.name, name))
                 .map((expense) => ({ expense, bucket }))
-            : filter === bucket
+            : view.bucket === bucket
               ? buckets[bucket].map((expense) => ({ expense, bucket }))
               : [],
         ),
         total: expenseTotal([...buckets.upcoming, ...buckets.past]),
       })),
-    [grouped, filter, expenseTotal, searching, needle],
+    [grouped, view.bucket, expenseTotal, searching, needle],
   )
 
   const counts = useMemo(() => {
@@ -91,7 +98,7 @@ export function ExpensesBoard({
   const incomeSum = currentIncome.reduce((sum, source) => sum + incomeAmount(source), 0)
   const incomeShown = searching
     ? income.filter((source) => matchesSearch(needle, source.name))
-    : filter === 'pastIncome'
+    : view.income === 'past'
       ? pastIncome
       : currentIncome
   const spent = categories.reduce((sum, category) => sum + category.total, 0)
@@ -105,8 +112,6 @@ export function ExpensesBoard({
       total: category.total,
     })),
   ]
-  // A category deleted while picked falls back to All.
-  const current = nav.some((item) => item.id === picked) ? picked : 'all'
   const shown =
     current === 'all'
       ? categories.filter((category) => category.items.length > 0)
@@ -155,14 +160,14 @@ export function ExpensesBoard({
         </div>
         {current !== 'income' && !searching && (
           <div className="-mx-1 flex gap-1.5 overflow-x-auto p-1">
-            {FILTERS.map((option) => (
+            {FILTERS.filter((option) => option.id !== 'pastIncome' || current === 'all').map((option) => (
               <button
                 key={option.id}
                 type="button"
                 onClick={() => setFilter(option.id)}
-                aria-pressed={filter === option.id}
+                aria-pressed={view.filter === option.id}
                 className={`press min-h-9 shrink-0 rounded-full px-3 text-sm ring-1 ${
-                  filter === option.id
+                  view.filter === option.id
                     ? 'bg-zinc-100 text-zinc-900 ring-zinc-100'
                     : 'text-zinc-400 ring-rule-strong hover:text-zinc-100'
                 }`}
@@ -174,7 +179,7 @@ export function ExpensesBoard({
           </div>
         )}
         {(current === 'all' || current === 'income') &&
-          (searching ? incomeShown.length > 0 || current === 'income' : filter === 'upcoming' || filter === 'pastIncome') && (
+          (searching ? incomeShown.length > 0 || current === 'income' : view.income != null) && (
           <section className="space-y-2">
             <Heading title="Income" total={formatMoney(incomeSum, currency)} />
             {incomeShown.length > 0 ? (
@@ -183,7 +188,7 @@ export function ExpensesBoard({
               <Empty>
                 {searching
                   ? `No income matches “${query.trim()}”.`
-                  : filter === 'pastIncome'
+                  : view.income === 'past'
                     ? 'No past income.'
                     : `No income this ${periodWord}.`}
               </Empty>
@@ -191,7 +196,7 @@ export function ExpensesBoard({
           </section>
         )}
         {current !== 'income' &&
-          (searching || filter !== 'pastIncome') &&
+          (searching || view.bucket != null) &&
           shown.map((category) => (
             <section key={category.name} className="space-y-2">
               <Heading title={category.name} total={formatMoney(category.total, currency)} />
