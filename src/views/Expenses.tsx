@@ -75,12 +75,8 @@ function rememberCategory(category: string) {
 }
 
 export function Expenses({
-  logRequest = false,
-  onLogHandled,
 }: {
   /** Set by the phone nav's log button: open the add-expense sheet once on arrival. */
-  logRequest?: boolean
-  onLogHandled?: () => void
 } = {}) {
   const income = useBudgetStore((s) => s.income)
   const expenses = useBudgetStore((s) => s.expenses)
@@ -103,10 +99,7 @@ export function Expenses({
 
   const [viewingExpense, setViewingExpense] = useState<Expense | null>(null)
   const [viewingIncome, setViewingIncome] = useState<IncomeSource | null>(null)
-  // The page remounts on every visit, so a log request from the phone nav opens the sheet on arrival.
-  const [editingExpense, setEditingExpense] = useState<ItemEditor<Expense> | null>(
-    logRequest ? { mode: 'add' } : null,
-  )
+  const [editingExpense, setEditingExpense] = useState<ItemEditor<Expense> | null>(null)
   const [editingIncome, setEditingIncome] = useState<ItemEditor<IncomeSource> | null>(null)
   const [historyOpen, setHistoryOpen] = useState(false)
   const [monthChoice, setMonthChoice] = useState<{
@@ -128,10 +121,6 @@ export function Expenses({
     | null
   >(null)
   const clearUndo = useCallback(() => setUndo(null), [])
-
-  useEffect(() => {
-    if (logRequest) onLogHandled?.()
-  }, [logRequest, onLogHandled])
 
   const range = useMemo(
     () =>
@@ -506,6 +495,109 @@ export function Expenses({
   )
 }
 
+type EditorSheetExtras = {
+  /** Row under the sheet title, used by quick add for its type switch. */
+  toolbar?: ReactNode
+  skipEnter?: boolean
+}
+
+type QuickAddKind = 'expense' | 'income'
+
+/**
+ * The phone nav's add button: income or expense, saved without leaving the page.
+ * Stays mounted so its confirmation toast outlives the sheet.
+ */
+export function QuickAdd({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const currency = useBudgetStore((s) => s.meta.currency)
+  const addExpense = useBudgetStore((s) => s.addExpense)
+  const addIncome = useBudgetStore((s) => s.addIncome)
+  const removeExpense = useBudgetStore((s) => s.removeExpense)
+  const removeIncome = useBudgetStore((s) => s.removeIncome)
+  const [kind, setKind] = useState<QuickAddKind>('expense')
+  // The first sheet slides in; switching type swaps the form in place.
+  const [switched, setSwitched] = useState(false)
+  const [saved, setSaved] = useState<{ kind: QuickAddKind; id: string; label: string } | null>(null)
+  const clearSaved = useCallback(() => setSaved(null), [])
+
+  const close = () => {
+    setKind('expense')
+    setSwitched(false)
+    onClose()
+  }
+
+  const toggle = (
+    <div role="group" aria-label="Type" className="flex rounded-lg bg-ledger-2 p-0.5 ring-1 ring-rule">
+      {(['expense', 'income'] as const).map((option) => (
+        <button
+          key={option}
+          type="button"
+          aria-pressed={kind === option}
+          onClick={() => {
+            if (option === kind) return
+            setKind(option)
+            setSwitched(true)
+          }}
+          className={`min-h-9 flex-1 rounded-md px-3 text-sm ${
+            kind === option ? 'bg-ledger-4 text-paper' : 'text-paper-3 hover:text-paper'
+          }`}
+        >
+          {option === 'expense' ? 'Expense' : 'Income'}
+        </button>
+      ))}
+    </div>
+  )
+
+  return (
+    <>
+      {open && kind === 'expense' && (
+        <ExpenseEditor
+          mode="add"
+          initial={null}
+          currency={currency}
+          toolbar={toggle}
+          skipEnter={switched}
+          onClose={close}
+          onSave={(value) => {
+            addExpense(value)
+            rememberCategory(value.category)
+            setSaved({ kind: 'expense', id: value.id, label: `${formatMoney(value.amount, currency)} · ${value.name}` })
+            close()
+          }}
+        />
+      )}
+      {open && kind === 'income' && (
+        <IncomeEditor
+          mode="add"
+          initial={null}
+          currency={currency}
+          toolbar={toggle}
+          skipEnter={switched}
+          onClose={close}
+          onSave={(value) => {
+            addIncome(value)
+            setSaved({ kind: 'income', id: value.id, label: `${formatMoney(value.amount, currency)} · ${value.name}` })
+            close()
+          }}
+        />
+      )}
+      {saved && (
+        <Toast
+          key={saved.id}
+          actionLabel="Undo"
+          onDone={clearSaved}
+          onAction={() => {
+            if (saved.kind === 'expense') removeExpense(saved.id)
+            else removeIncome(saved.id)
+            setSaved(null)
+          }}
+        >
+          {saved.kind === 'expense' ? 'Logged' : 'Added'} {saved.label}
+        </Toast>
+      )}
+    </>
+  )
+}
+
 /** Shared income and expense list styling. */
 const LIST =
   'stagger card-surface divide-y divide-zinc-200 rounded-2xl bg-white ring-1 ring-zinc-200 dark:divide-rule dark:ring-0'
@@ -752,13 +844,15 @@ function IncomeEditor({
   currency,
   onClose,
   onSave,
+  toolbar,
+  skipEnter,
 }: {
   initial: IncomeSource | null
   mode: ItemEditor<IncomeSource>['mode']
   currency: string
   onClose: () => void
   onSave: (source: IncomeSource) => void
-}) {
+} & EditorSheetExtras) {
   const [name, setName] = useState(
     mode === 'duplicate' ? copyName(initial?.name ?? '', 'Income') : (initial?.name ?? ''),
   )
@@ -784,6 +878,8 @@ function IncomeEditor({
       }
       onClose={onClose}
       mobileActions={<MobileFormActions formId="income-editor" onClose={onClose} />}
+      toolbar={toolbar}
+      skipEnter={skipEnter}
     >
       <form
         id="income-editor"
@@ -1080,13 +1176,15 @@ function ExpenseEditor({
   currency,
   onClose,
   onSave,
+  toolbar,
+  skipEnter,
 }: {
   initial: Expense | null
   mode: ItemEditor<Expense>['mode']
   currency: string
   onClose: () => void
   onSave: (expense: Expense) => void
-}) {
+} & EditorSheetExtras) {
   const [name, setName] = useState(
     mode === 'duplicate' ? copyName(initial?.name ?? '', 'Expense') : (initial?.name ?? ''),
   )
@@ -1126,6 +1224,8 @@ function ExpenseEditor({
       }
       onClose={onClose}
       mobileActions={<MobileFormActions formId="expense-editor" onClose={onClose} />}
+      toolbar={toolbar}
+      skipEnter={skipEnter}
     >
       <form
         id="expense-editor"

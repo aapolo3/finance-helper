@@ -7,12 +7,18 @@ export function Sheet({
   title,
   onClose,
   mobileActions,
+  toolbar,
+  skipEnter = false,
   children,
 }: {
   title: string
   onClose: () => void
   /** Shown beside the title below the `sm` breakpoint. */
   mobileActions?: ReactNode
+  /** A row under the title, such as a type switch. */
+  toolbar?: ReactNode
+  /** Appear in place, for a sheet that replaces another one already on screen. */
+  skipEnter?: boolean
   children: ReactNode
 }) {
   const [closing, setClosing] = useState(false)
@@ -94,7 +100,7 @@ export function Sheet({
   }, [])
 
   return (
-    <div ref={overlayRef} className={`${closing ? 'fade-out' : 'fade-in'} fixed inset-0 z-50 bg-black/40 sm:flex sm:items-center sm:justify-center sm:p-4`}>
+    <div ref={overlayRef} className={`${closing ? 'fade-out' : skipEnter ? '' : 'fade-in'} fixed inset-0 z-50 bg-black/40 sm:flex sm:items-center sm:justify-center sm:p-4`}>
       <button
         type="button"
         className="absolute inset-0"
@@ -105,15 +111,18 @@ export function Sheet({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`${closing ? 'sheet-out' : 'sheet-in'} relative z-10 grid h-full w-full grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-white dark:bg-zinc-900 sm:h-auto sm:max-h-[min(90dvh,100%)] sm:max-w-md sm:rounded-2xl`}
+        className={`${closing ? 'sheet-out' : skipEnter ? '' : 'sheet-in'} relative z-10 grid h-full w-full grid-rows-[auto_minmax(0,1fr)] overflow-hidden bg-white dark:bg-zinc-900 sm:h-auto sm:max-h-[min(90dvh,100%)] sm:max-w-md sm:rounded-2xl`}
       >
-        <div className="flex items-center justify-between gap-3 px-5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-1">
-          <h2 className="font-display text-xl tracking-[-0.01em] text-paper">
-            {title}
-          </h2>
-          {mobileActions ? (
-            <div className="flex shrink-0 items-center gap-1 md:hidden">{mobileActions}</div>
-          ) : null}
+        <div className="px-5 pt-[max(1.25rem,env(safe-area-inset-top))] pb-1">
+          <div className="flex items-center justify-between gap-3">
+            <h2 className="font-display text-xl tracking-[-0.01em] text-paper">
+              {title}
+            </h2>
+            {mobileActions ? (
+              <div className="flex shrink-0 items-center gap-1 md:hidden">{mobileActions}</div>
+            ) : null}
+          </div>
+          {toolbar ? <div className="mt-3">{toolbar}</div> : null}
         </div>
         {children}
       </div>

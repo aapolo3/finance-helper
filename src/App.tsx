@@ -19,6 +19,7 @@ const loadSettings = () => import('./views/Settings')
 void loadOverview()
 const Overview = lazy(() => loadOverview().then((m) => ({ default: m.Overview })))
 const Expenses = lazy(() => loadExpenses().then((m) => ({ default: m.Expenses })))
+const QuickAdd = lazy(() => loadExpenses().then((m) => ({ default: m.QuickAdd })))
 const Budget = lazy(() => loadBudget().then((m) => ({ default: m.Budget })))
 const Recurring = lazy(() => loadRecurring().then((m) => ({ default: m.Recurring })))
 const Goals = lazy(() => loadGoals().then((m) => ({ default: m.Goals })))
@@ -75,12 +76,10 @@ export default function App() {
   }, [])
   const mainRef = usePeriodSlide()
   const [dismissedEmpty, setDismissedEmpty] = useState(false)
-  const [logRequest, setLogRequest] = useState(false)
-  const clearLogRequest = useCallback(() => setLogRequest(false), [])
-  const startLog = useCallback(() => {
-    setPage('cashflow')
-    setLogRequest(true)
-  }, [])
+  // Adding from anywhere opens a sheet over the current page instead of switching pages.
+  const [quickAddOpen, setQuickAddOpen] = useState(false)
+  const startLog = useCallback(() => setQuickAddOpen(true), [])
+  const closeQuickAdd = useCallback(() => setQuickAddOpen(false), [])
 
   useEffect(() => {
     let unsub = () => {}
@@ -140,7 +139,7 @@ export default function App() {
             {page === 'today' && (
               <Overview onOpen={(tab) => setPage(tab === 'expenses' ? 'cashflow' : tab)} onLog={startLog} />
             )}
-            {page === 'cashflow' && <Expenses logRequest={logRequest} onLogHandled={clearLogRequest} />}
+            {page === 'cashflow' && <Expenses />}
             {page === 'budget' && <Budget onAdd={startLog} />}
             {page === 'recurring' && <Recurring />}
             {page === 'goals' && <Goals />}
@@ -151,6 +150,9 @@ export default function App() {
         </div>
       </div>
       <PhoneNav page={page} onSelect={setPage} onLog={startLog} />
+      <Suspense fallback={null}>
+        <QuickAdd open={quickAddOpen} onClose={closeQuickAdd} />
+      </Suspense>
       <AheadSlip />
     </div>
   )
@@ -356,7 +358,7 @@ function PhoneNav({
         <div className="flex items-center justify-center">
           <button
             type="button"
-            aria-label="Log an expense"
+            aria-label="Add income or expense"
             onClick={onLog}
             className="press flex h-12 w-12 items-center justify-center rounded-full bg-paper text-ink"
           >
