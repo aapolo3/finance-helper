@@ -74,6 +74,8 @@ async function setup(storedOwner?: string) {
   const { useAuthStore } = await import('./authStore')
   const { useBudgetStore } = await import('./budgetStore')
   const stop = useAuthStore.getState().init()
+  // Signed out, so connect now instead of waiting for the page to go idle.
+  useAuthStore.getState().prepareSignIn()
   await vi.advanceTimersByTimeAsync(0)
   const callback = onAuthStateChanged.mock.calls[0][1] as (user: User | null) => Promise<void>
   const signIn = (uid: string | null) => {

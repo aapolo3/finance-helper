@@ -40,6 +40,9 @@ export function Settings() {
   const loadBudgetHistory = useAuthStore((s) => s.loadBudgetHistory)
   const restoreBudgetHistory = useAuthStore((s) => s.restoreBudgetHistory)
   const clearError = useAuthStore((s) => s.clearError)
+  const prepareSignIn = useAuthStore((s) => s.prepareSignIn)
+  // The sign-in button needs Firebase loaded, so do not wait for the idle-time load.
+  useEffect(() => prepareSignIn(), [prepareSignIn])
   const flushPersist = useBudgetStore((s) => s.flushPersist)
   const { ask, dialog } = useConfirmFlow()
   const [history, setHistory] = useState<BudgetHistoryEntry[]>([])

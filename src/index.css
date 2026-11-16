@@ -25,7 +25,7 @@
   --color-over: #a5303b;
 
   --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Newsreader", Georgia, serif;
+  --font-display: "Newsreader Variable", Georgia, serif;
 }
 
 /* Compact card layouts: a grid card narrower than 380px, or any card under 20rem wide. */

@@ -56,6 +56,35 @@ function writeSignedInHint(signedIn: boolean) {
 const AUTH_WAIT_TIMEOUT_MS = 10_000
 const RETRY_BASE_MS = 5_000
 const RETRY_MAX_MS = 5 * 60 * 1000
+// Signed-out visits load Firebase a while after the page has loaded, then at idle, so the SDK never competes
+// with first paint. The load event can fire before the budget renders, so idle alone is too early.
+// Screens that offer sign-in call prepareSignIn and load it at once.
+const SIGNED_OUT_CONNECT_DELAY_MS = 3_000
+const IDLE_CONNECT_TIMEOUT_MS = 3_000
+
+/** Runs `run` once, a delay after the page has loaded and then when the main thread is idle. Returns a cancel function. */
+function afterPageSettles(run: () => void): () => void {
+  let cancelStep: (() => void) | null = null
+  const idle = () => {
+    // Safari has no requestIdleCallback, so it runs when the delay ends.
+    if (typeof window.requestIdleCallback !== 'function') return run()
+    const id = window.requestIdleCallback(run, { timeout: IDLE_CONNECT_TIMEOUT_MS })
+    cancelStep = () => window.cancelIdleCallback(id)
+  }
+  const wait = () => {
+    const id = setTimeout(idle, SIGNED_OUT_CONNECT_DELAY_MS)
+    cancelStep = () => clearTimeout(id)
+  }
+  if (typeof document === 'undefined' || document.readyState === 'complete') {
+    wait()
+    return () => cancelStep?.()
+  }
+  window.addEventListener('load', wait, { once: true })
+  return () => {
+    window.removeEventListener('load', wait)
+    cancelStep?.()
+  }
+}
 
 export type FirebaseSdkStatus = 'loading' | 'ready' | 'failed'
 
@@ -72,6 +101,8 @@ interface AuthState {
   lastSyncedAtMs: number | null
   syncNote: string | null
   init: () => () => void
+  /** Starts loading Firebase now instead of at idle, for screens that offer sign-in. */
+  prepareSignIn: () => void
   signInWithGoogle: () => Promise<void>
   signOutUser: () => Promise<void>
   clearError: () => void
@@ -86,6 +117,8 @@ let connectionActive = false
 let unsubscribeAuth: (() => void) | null = null
 let subscribe: (firebase: FirebaseApi) => void = () => {}
 let attemptConnect: (fromClick?: boolean) => Promise<void> = async () => {}
+let cancelDeferredConnect: (() => void) | null = null
+let connectNow: () => void = () => {}
 // Each auth change or merge retry takes a new run number, which makes every earlier merge stale.
 let mergeRun = 0
 let mergeInFlight = false
@@ -225,6 +258,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ sdkStatus: 'ready' })
     }
     attemptConnect = async (fromClick = false) => {
+      cancelDeferredConnect?.()
+      cancelDeferredConnect = null
       if (!connectionActive || unsubscribeAuth) return
       clearRetry()
       if (fromClick) {
@@ -251,18 +286,28 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       if (firebase && user && mergedUid === null && !mergeInFlight) void mergeWithCloud(firebase, user)
       void attemptConnect()
     }
+    connectNow = () => {
+      startWait()
+      void attemptConnect()
+    }
     connectionActive = true
     window.addEventListener('online', onOnline)
-    startWait()
-    void attemptConnect()
+    // A signed-in browser connects at once, so restoring the session is not delayed.
+    if (get().restoring) connectNow()
+    else cancelDeferredConnect = afterPageSettles(() => connectNow())
     return () => {
       connectionActive = false
+      cancelDeferredConnect?.()
+      cancelDeferredConnect = null
       window.removeEventListener('online', onOnline)
       clearRetry()
       clearWait()
       unsubscribeAuth?.()
       unsubscribeAuth = null
     }
+  },
+  prepareSignIn: () => {
+    if (cancelDeferredConnect) connectNow()
   },
   signInWithGoogle: async () => {
     // Never open the popup after an await: browsers block popups that open too long after the click.
