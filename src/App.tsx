@@ -56,6 +56,7 @@ const PHONE_TABS: PageId[] = ['today', 'cashflow', 'budget']
 export default function App() {
   const hydrate = useBudgetStore((s) => s.hydrate)
   const hydrated = useBudgetStore((s) => s.hydrated)
+  const loadError = useBudgetStore((s) => s.loadError)
   const income = useBudgetStore((s) => s.income)
   const expenses = useBudgetStore((s) => s.expenses)
   const goals = useBudgetStore((s) => s.goals)
@@ -83,20 +84,32 @@ export default function App() {
   const closeQuickAdd = useCallback(() => setQuickAddOpen(false), [])
 
   useEffect(() => {
-    let unsub = () => {}
-    void (async () => {
-      await hydrate()
-      unsub = initAuth()
-    })()
-    return () => unsub()
-  }, [hydrate, initAuth])
+    void hydrate()
+  }, [hydrate])
+
+  // Sign-in starts only once the local budget is loaded, so a sync never merges into nothing.
+  useEffect(() => {
+    if (!hydrated) return
+    return initAuth()
+  }, [hydrated, initAuth])
 
   useEffect(() => {
     if (hydrated) prefetchPages()
   }, [hydrated])
 
   if (!hydrated) {
-    return (
+    return loadError ? (
+      <div role="alert" className="flex min-h-svh flex-col items-center justify-center gap-3 px-6 text-center">
+        <p className="text-sm text-paper-2">{loadError} Your data has not been changed.</p>
+        <button
+          type="button"
+          onClick={() => void hydrate()}
+          className="press min-h-11 rounded-lg bg-paper px-4 text-sm font-medium text-ink"
+        >
+          Try again
+        </button>
+      </div>
+    ) : (
       <div className="flex min-h-svh items-center justify-center text-sm text-zinc-500">
         Loading…
       </div>

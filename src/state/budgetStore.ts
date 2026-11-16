@@ -17,6 +17,8 @@ import { saveCloudBudget } from '../storage/firestoreBudget'
 
 interface BudgetActions {
   hydrated: boolean
+  /** Set when the saved budget could not be read; the app shows Retry instead of loading forever. */
+  loadError: string | null
   hydrate: () => Promise<void>
   replace: (state: BudgetState) => void
   applyRemote: (state: BudgetState) => void
@@ -227,9 +229,15 @@ const empty = emptyBudget()
 export const useBudgetStore = create<BudgetStoreState>((set, get) => ({
   ...empty,
   hydrated: false,
+  loadError: null,
   hydrate: async () => {
-    const loaded = await indexedDbStore.load()
-    set({ ...loaded, hydrated: true })
+    try {
+      const loaded = await indexedDbStore.load()
+      set({ ...loaded, hydrated: true, loadError: null })
+    } catch {
+      // Stay unhydrated: marking it loaded would let autosave overwrite the saved budget.
+      set({ loadError: 'Flow could not open the budget saved in this browser.' })
+    }
   },
   replace: (state) => {
     set({

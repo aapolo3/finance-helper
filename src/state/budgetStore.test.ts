@@ -362,3 +362,36 @@ describe('budget persistence', () => {
     expect(saveCloudBudget).not.toHaveBeenCalled()
   })
 })
+
+describe('loading the saved budget', () => {
+  beforeEach(() => {
+    vi.resetModules()
+  })
+
+  it('reports a failed load instead of loading forever, and recovers on retry', async () => {
+    const { indexedDbStore } = await import('../storage/indexedDb')
+    const loadSaved = vi.mocked(indexedDbStore.load)
+    const { useBudgetStore } = await load()
+    const saved = { ...useBudgetStore.getState() }
+
+    loadSaved.mockRejectedValueOnce(new Error('IndexedDB blocked'))
+    await useBudgetStore.getState().hydrate()
+    expect(useBudgetStore.getState().hydrated).toBe(false)
+    expect(useBudgetStore.getState().loadError).toMatch(/could not open/)
+
+    loadSaved.mockResolvedValueOnce(saved as never)
+    await useBudgetStore.getState().hydrate()
+    expect(useBudgetStore.getState().hydrated).toBe(true)
+    expect(useBudgetStore.getState().loadError).toBeNull()
+  })
+
+  it('does not save anything while the load has failed', async () => {
+    const { indexedDbStore } = await import('../storage/indexedDb')
+    vi.mocked(indexedDbStore.load).mockRejectedValueOnce(new Error('quota'))
+    saveLocal.mockReset()
+    const { useBudgetStore } = await load()
+
+    await useBudgetStore.getState().hydrate()
+    expect(saveLocal).not.toHaveBeenCalled()
+  })
+})
