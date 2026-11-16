@@ -14,6 +14,11 @@ const FILTERS: { id: Filter; label: string }[] = [
   { id: 'pastIncome', label: 'Past income' },
 ]
 
+/** True when any field contains the lowercase search text. */
+function matchesSearch(needle: string, ...fields: string[]) {
+  return fields.some((field) => field.toLowerCase().includes(needle))
+}
+
 const STATUS: Record<Bucket, string> = { upcoming: '', past: 'Paid', later: 'Not due' }
 
 const LIST =
@@ -43,19 +48,27 @@ export function ExpensesBoard({
 }) {
   const [filter, setFilter] = useState<Filter>('upcoming')
   const [picked, setPicked] = useState<string>('all')
+  const [query, setQuery] = useState('')
+  const needle = query.trim().toLowerCase()
+  // A search looks past the status filter, so a paid or not-due match is never hidden.
+  const searching = needle.length > 0
 
   const categories = useMemo(
     () =>
       grouped.map(([name, buckets]) => ({
         name,
         items: (['upcoming', 'past', 'later'] as const).flatMap((bucket) =>
-          filter === bucket
-            ? buckets[bucket].map((expense) => ({ expense, bucket }))
-            : [],
+          searching
+            ? buckets[bucket]
+                .filter((expense) => matchesSearch(needle, expense.name, name))
+                .map((expense) => ({ expense, bucket }))
+            : filter === bucket
+              ? buckets[bucket].map((expense) => ({ expense, bucket }))
+              : [],
         ),
         total: expenseTotal([...buckets.upcoming, ...buckets.past]),
       })),
-    [grouped, filter, expenseTotal],
+    [grouped, filter, expenseTotal, searching, needle],
   )
 
   const counts = useMemo(() => {
@@ -76,7 +89,11 @@ export function ExpensesBoard({
   const currentIncome = income.filter((source) => !pastIncomeIds.has(source.id))
   const pastIncome = income.filter((source) => pastIncomeIds.has(source.id))
   const incomeSum = currentIncome.reduce((sum, source) => sum + incomeAmount(source), 0)
-  const incomeShown = filter === 'pastIncome' ? pastIncome : currentIncome
+  const incomeShown = searching
+    ? income.filter((source) => matchesSearch(needle, source.name))
+    : filter === 'pastIncome'
+      ? pastIncome
+      : currentIncome
   const spent = categories.reduce((sum, category) => sum + category.total, 0)
 
   const nav = [
@@ -118,7 +135,25 @@ export function ExpensesBoard({
         ))}
       </nav>
       <div className="min-w-0 flex-1 space-y-4">
-        {current !== 'income' && (
+        <div className="relative">
+          <svg
+            viewBox="0 0 20 20"
+            aria-hidden="true"
+            className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-paper-3"
+          >
+            <circle cx="8.5" cy="8.5" r="5" fill="none" stroke="currentColor" strokeWidth="1.6" />
+            <path d="M12.5 12.5L16 16" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+          </svg>
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            aria-label="Search income and expenses"
+            placeholder="Search by name or category"
+            className="min-h-10 w-full rounded-xl bg-transparent pr-3 pl-9 text-sm text-paper ring-1 ring-rule-strong placeholder:text-paper-3"
+          />
+        </div>
+        {current !== 'income' && !searching && (
           <div className="-m-1 flex gap-1.5 overflow-x-auto p-1">
             {FILTERS.map((option) => (
               <button
@@ -139,20 +174,24 @@ export function ExpensesBoard({
           </div>
         )}
         {(current === 'all' || current === 'income') &&
-          (filter === 'upcoming' || filter === 'pastIncome') && (
+          (searching ? incomeShown.length > 0 || current === 'income' : filter === 'upcoming' || filter === 'pastIncome') && (
           <section className="space-y-2">
             <Heading title="Income" total={formatMoney(incomeSum, currency)} />
             {incomeShown.length > 0 ? (
               <ul className={LIST}>{incomeShown.map(incomeRow)}</ul>
             ) : (
               <Empty>
-                {filter === 'pastIncome' ? 'No past income.' : `No income this ${periodWord}.`}
+                {searching
+                  ? `No income matches “${query.trim()}”.`
+                  : filter === 'pastIncome'
+                    ? 'No past income.'
+                    : `No income this ${periodWord}.`}
               </Empty>
             )}
           </section>
         )}
         {current !== 'income' &&
-          filter !== 'pastIncome' &&
+          (searching || filter !== 'pastIncome') &&
           shown.map((category) => (
             <section key={category.name} className="space-y-2">
               <Heading title={category.name} total={formatMoney(category.total, currency)} />
@@ -161,11 +200,17 @@ export function ExpensesBoard({
                   {category.items.map(({ expense, bucket }) => expenseRow(expense, STATUS[bucket]))}
                 </ul>
               ) : (
-                <Empty>Nothing here.</Empty>
+                <Empty>{searching ? `Nothing matches “${query.trim()}”.` : 'Nothing here.'}</Empty>
               )}
             </section>
           ))}
-        {current === 'all' && shown.length === 0 && <Empty>Nothing here this {periodWord}.</Empty>}
+        {current === 'all' &&
+          shown.length === 0 &&
+          (searching ? (
+            incomeShown.length === 0 && <Empty>Nothing matches “{query.trim()}”.</Empty>
+          ) : (
+            <Empty>Nothing here this {periodWord}.</Empty>
+          ))}
       </div>
     </div>
   )
