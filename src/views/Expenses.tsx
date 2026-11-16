@@ -193,6 +193,24 @@ export function Expenses({
         0,
       )
 
+  // A one-time expense lives in a single month, so there is no range to ask about.
+  const requestDeleteExpense = (expense: Expense) => {
+    setUndo(null)
+    if (expense.cadence === 'once') {
+      setUndo({ kind: 'expense', item: expense, label: expense.name })
+      removeExpense(expense.id)
+      return
+    }
+    setMonthChoice({
+      kind: 'expense',
+      action: 'delete',
+      id: expense.id,
+      name: expense.name,
+      month: viewedMonth,
+      turningOn: false,
+    })
+  }
+
   const expenseRowProps = (expense: Expense, muted: boolean) => ({
     expense,
     currency: meta.currency,
@@ -217,17 +235,7 @@ export function Expenses({
         turningOn: !countsInMonth(expense, viewedMonth),
       })
     },
-    onDelete: () => {
-      setUndo(null)
-      setMonthChoice({
-        kind: 'expense',
-        action: 'delete',
-        id: expense.id,
-        name: expense.name,
-        month: viewedMonth,
-        turningOn: false,
-      })
-    },
+    onDelete: () => requestDeleteExpense(expense),
   })
 
 
@@ -423,15 +431,7 @@ export function Expenses({
           onDelete={() => {
             const expense = viewingExpense
             setViewingExpense(null)
-            setUndo(null)
-            setMonthChoice({
-              kind: 'expense',
-              action: 'delete',
-              id: expense.id,
-              name: expense.name,
-              month: viewedMonth,
-              turningOn: false,
-            })
+            requestDeleteExpense(expense)
           }}
         />
       )}
